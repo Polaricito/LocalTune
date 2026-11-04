@@ -502,7 +502,7 @@ fun LibraryArtistsScreen(
                 ) {
                     LibraryEmptyState(
                         iconRes = R.drawable.artist,
-                        actionLabelRes = R.string.search_yt_music,
+                        actionLabelRes = R.string.search_your_library,
                         onAction = openSearch,
                     )
                 }

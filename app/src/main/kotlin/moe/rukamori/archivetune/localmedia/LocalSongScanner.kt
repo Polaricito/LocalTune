@@ -43,7 +43,6 @@ import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.db.entities.SongAlbumMap
 import moe.rukamori.archivetune.db.entities.SongArtistMap
 import moe.rukamori.archivetune.db.entities.SongEntity
-import moe.rukamori.archivetune.lyrics.LyricsUtils
 import timber.log.Timber
 
 data class LocalSongScanConfig(
@@ -95,7 +94,6 @@ class LocalSongScanner @Inject constructor(
     @ApplicationContext private val context: Context,
     private val database: MusicDatabase,
     private val metadataReader: LocalAudioMetadataReader,
-    private val metadataRepository: LocalMetadataRepository,
     private val mediaIndexer: LocalMediaIndexer,
 ) {
     private val scanMutex = Mutex()
@@ -106,76 +104,77 @@ class LocalSongScanner @Inject constructor(
                 mediaIndexer.indexMissingAudio()
                 val scanned = queryTracks(scanConfig)
                 val ids = scanned.map(LocalTrackRecord::id)
-                val enriched = enrichTracks(scanned, loadSongs(ids), loadFormats(ids))
                 val summary = database.withTransaction {
-                    val scannedIds = enriched.tracks.map(LocalTrackRecord::id)
-                    val scannedIdSet = scannedIds.toSet()
+                    val scannedIdSet = ids.toSet()
                     val removedIds = localSongIds().filterNot(scannedIdSet::contains)
                     removedIds.chunked(SqlBatchSize).forEach(::deleteSongsByIds)
-                    val existingSongs = loadSongs(scannedIds)
-                    val existingLyrics = loadLyrics(scannedIds)
-                    val existingFormats = loadFormats(scannedIds)
+                    val existingSongs = loadSongs(ids)
+                    val existingLyrics = loadLyrics(ids)
+                    val existingFormats = loadFormats(ids)
                     val resolver = CatalogResolver()
-                    val artistCredits = enriched.tracks.flatMap { track ->
-                        (track.artists + albumArtistNames(track)).distinct().map { name -> name to track }
-                    }.groupBy { LocalMusicIdentity.normalize(it.first) }
-                    val artistIds = artistCredits.mapValues { (_, credits) ->
-                        currentCoroutineContext().ensureActive()
-                        val name = credits.first().first
-                        val matches = credits.map { it.second }.filter { it.matchedArtistName?.let { matched -> sameName(name, matched) } == true }
-                        resolver.resolveArtist(
-                            name,
-                            matches.mapNotNull { it.remoteArtistId }.distinct().singleOrNull(),
-                            matches.firstNotNullOfOrNull { it.artistThumbnailUrl },
-                        )
-                    }
+                    val artistIds = scanned.flatMap { track ->
+                        (track.artists + albumArtistNames(track)).distinct()
+                    }.associateWith { name -> resolver.resolveArtist(name) }
                     val albumIds = mutableMapOf<String, String>()
-                    enriched.tracks.filter { it.albumName != null }.groupBy(::albumKey).forEach { (key, tracks) ->
+                    scanned.filter { it.albumName != null }.groupBy(::albumKey).forEach { (key, tracks) ->
                         val albumArtistIds = albumArtistNames(tracks.first()).map { name ->
-                            artistIds.getValue(LocalMusicIdentity.normalize(name))
+                            artistIds.getValue(name)
                         }.distinct()
                         val previousIds = tracks.mapNotNull { existingSongs[it.id]?.song?.albumId }.toSet()
                         albumIds[key] = resolver.resolveAlbum(tracks, albumArtistIds, previousIds)
                     }
-                    enriched.tracks.forEach { track ->
+                    scanned.forEach { track ->
                         currentCoroutineContext().ensureActive()
                         val existing = existingSongs[track.id]?.song
                         val oldFormat = existingFormats[track.id]
                         val albumId = track.albumName?.let { albumIds[albumKey(track)] }
                         val base = existing ?: SongEntity(id = track.id, title = track.title, dateDownload = null)
-                        upsert(base.copy(
-                            title = if (base.titleOverride) base.title else track.title,
-                            duration = track.durationSeconds,
-                            thumbnailUrl = track.thumbnailUrl ?: albumId?.let { resolver.albumArtwork(it) } ?: track.mediaStoreThumbnailUrl,
-                            albumId = albumId,
-                            albumName = track.albumName,
-                            albumArtist = track.albumArtist,
-                            trackNumber = track.trackNumber,
-                            discNumber = track.discNumber,
-                            year = track.year,
-                            dateModified = track.dateModified,
-                            isLocal = true,
-                        ))
+                        upsert(
+                            base.copy(
+                                title = if (base.titleOverride) base.title else track.title,
+                                duration = track.durationSeconds,
+                                thumbnailUrl = track.thumbnailUrl
+                                    ?: albumId?.let { resolver.albumArtwork(it) }
+                                    ?: track.mediaStoreThumbnailUrl,
+                                albumId = albumId,
+                                albumName = track.albumName,
+                                albumArtist = track.albumArtist,
+                                trackNumber = track.trackNumber,
+                                discNumber = track.discNumber,
+                                year = track.year,
+                                dateModified = track.dateModified,
+                                isLocal = true,
+                            ),
+                        )
                         val unchanged = isUnchanged(track, existing, oldFormat)
-                        upsert(FormatEntity(
-                            id = track.id,
-                            itag = -1,
-                            mimeType = track.mimeType,
-                            codecs = if (unchanged) oldFormat!!.codecs else "",
-                            bitrate = if (unchanged) oldFormat!!.bitrate else 0,
-                            sampleRate = if (unchanged) oldFormat!!.sampleRate else null,
-                            contentLength = track.sizeBytes,
-                            loudnessDb = if (unchanged) oldFormat!!.loudnessDb else null,
-                            perceptualLoudnessDb = if (unchanged) oldFormat!!.perceptualLoudnessDb else null,
-                            playbackUrl = null,
-                        ))
+                        upsert(
+                            FormatEntity(
+                                id = track.id,
+                                itag = -1,
+                                mimeType = track.mimeType,
+                                codecs = if (unchanged) oldFormat!!.codecs else "",
+                                bitrate = if (unchanged) oldFormat!!.bitrate else 0,
+                                sampleRate = if (unchanged) oldFormat!!.sampleRate else null,
+                                contentLength = track.sizeBytes,
+                                loudnessDb = if (unchanged) oldFormat!!.loudnessDb else null,
+                                perceptualLoudnessDb = if (unchanged) oldFormat!!.perceptualLoudnessDb else null,
+                                playbackUrl = null,
+                            ),
+                        )
                         deleteSongArtistMaps(track.id)
-                        track.artists.map { artistIds.getValue(LocalMusicIdentity.normalize(it)) }.distinct().forEachIndexed { index, artistId ->
-                            insert(SongArtistMap(songId = track.id, artistId = artistId, position = index))
-                        }
+                        track.artists.map { artistIds.getValue(it) }.distinct()
+                            .forEachIndexed { index, artistId ->
+                                insert(SongArtistMap(songId = track.id, artistId = artistId, position = index))
+                            }
                         deleteSongAlbumMaps(track.id)
                         if (albumId != null) {
-                            insert(SongAlbumMap(songId = track.id, albumId = albumId, index = track.trackNumber?.minus(1) ?: (Int.MAX_VALUE - 1)))
+                            insert(
+                                SongAlbumMap(
+                                    songId = track.id,
+                                    albumId = albumId,
+                                    index = track.trackNumber?.minus(1) ?: (Int.MAX_VALUE - 1),
+                                ),
+                            )
                         }
                         updateEmbeddedLyrics(track, existingLyrics[track.id])
                     }
@@ -184,81 +183,13 @@ class LocalSongScanner @Inject constructor(
                     pruneLocalArtists()
                     pruneFormats()
                     prunePlayCounts()
-                    LocalSongScanSummary(enriched.tracks.size, removedIds.size, enriched.lookupFailed)
+                    LocalSongScanSummary(scanned.size, removedIds.size)
                 }
                 val retained = database.localArtworkUrls().mapNotNull { Uri.parse(it).lastPathSegment }.toSet()
                 pruneUnusedArtworkFiles(retained)
                 summary
             }
         }
-
-    private suspend fun enrichTracks(
-        tracks: List<LocalTrackRecord>,
-        previousSongs: Map<String, Song>,
-        previousFormats: Map<String, FormatEntity>,
-    ): EnrichedTracks {
-        val cache = mutableMapOf<LocalMetadataQuery, LocalMetadataMatch?>()
-        var lookupFailed = false
-        val unknownArtist = context.getString(R.string.unknown_artist)
-        val enriched = tracks.map { scanned ->
-            currentCoroutineContext().ensureActive()
-            val previous = previousSongs[scanned.id]
-            val unchanged = isUnchanged(scanned, previous?.song, previousFormats[scanned.id])
-            var track = if (unchanged && previous != null) {
-                scanned.copy(
-                    albumName = scanned.albumName ?: previous.song.albumName,
-                    albumArtist = scanned.albumArtist ?: previous.song.albumArtist,
-                    year = scanned.year ?: previous.song.year,
-                    thumbnailUrl = scanned.thumbnailUrl ?: previous.song.thumbnailUrl?.takeUnless { it.startsWith("content://media/") },
-                    trackNumber = scanned.trackNumber ?: previous.song.trackNumber,
-                    discNumber = scanned.discNumber ?: previous.song.discNumber,
-                    remoteAlbumId = previous.album?.takeUnless { it.isLocal }?.id,
-                )
-            } else scanned
-            val lookupArtist = track.albumArtist?.let(::splitArtistNames)?.firstOrNull()
-                ?: track.artists.firstOrNull { it != unknownArtist }
-            val hasTrackArtist = track.artists.any { it != unknownArtist }
-            val lookupAlbum = track.albumName != null && hasTrackArtist
-            val query = LocalMetadataQuery(
-                title = if (lookupAlbum) "" else track.title,
-                artist = lookupArtist,
-                albumArtist = track.albumArtist,
-                album = track.albumName,
-                durationSeconds = if (lookupAlbum) 0 else track.durationSeconds,
-                year = track.year,
-            )
-            val needsLookup = !unchanged || track.albumArtist == null || track.year == null || track.thumbnailUrl == null || track.remoteAlbumId == null
-            val match = if (cache.containsKey(query)) {
-                cache[query]
-            } else if (!lookupFailed && lookupArtist != null && needsLookup) {
-                try {
-                    metadataRepository.find(query).also { cache[query] = it }
-                } catch (error: CancellationException) {
-                    throw error
-                } catch (error: Exception) {
-                    lookupFailed = true
-                    Timber.tag(LogTag).w(error, "Optional local metadata lookup failed")
-                    null
-                }
-            } else null
-            if (match != null) {
-                track = track.copy(
-                    artists = if (hasTrackArtist) track.artists else match.artist?.let(::splitArtistNames)?.takeIf { it.isNotEmpty() } ?: track.artists,
-                    albumName = track.albumName ?: cleanTag(match.album),
-                    albumArtist = track.albumArtist ?: cleanTag(match.albumArtist),
-                    year = track.year ?: match.year,
-                    thumbnailUrl = track.thumbnailUrl ?: match.thumbnailUrl,
-                    trackNumber = track.trackNumber ?: match.trackNumber,
-                    remoteAlbumId = match.albumId ?: track.remoteAlbumId,
-                    remoteArtistId = match.artistId,
-                    matchedArtistName = lookupArtist,
-                    artistThumbnailUrl = match.artistThumbnailUrl,
-                )
-            }
-            track
-        }
-        return EnrichedTracks(enriched, lookupFailed)
-    }
 
     private inner class CatalogResolver {
         private val artists = database.catalogArtistEntities().associateByTo(linkedMapOf()) { it.id }
@@ -270,14 +201,13 @@ class LocalSongScanner @Inject constructor(
 
         fun albumArtwork(id: String): String? = albums[id]?.thumbnailUrl
 
-        fun resolveArtist(name: String, remoteId: String?, thumbnailUrl: String?): String {
+        fun resolveArtist(name: String): String {
             val candidates = artists.values.filter { sameName(it.name, name) }
-            val remote = candidates.filter { !it.isLocal && it.isYouTubeArtist }.singleOrNull()
-            val id = remoteId ?: remote?.id ?: candidates.firstOrNull { it.isLocal }?.id
+            val id = candidates.firstOrNull { it.isLocal }?.id
                 ?: "LOCAL_ARTIST_${stableHash(LocalMusicIdentity.normalize(name))}"
             val existing = artists[id]
-            val entity = existing?.copy(thumbnailUrl = existing.thumbnailUrl ?: thumbnailUrl)
-                ?: ArtistEntity(id = id, name = name, thumbnailUrl = thumbnailUrl, isLocal = remoteId == null && remote == null)
+            val entity = existing?.copy(thumbnailUrl = existing.thumbnailUrl)
+                ?: ArtistEntity(id = id, name = name, isLocal = true)
             database.deleteLocalMusicAlias(id, "artist")
             database.upsert(entity)
             artists[id] = entity
@@ -295,39 +225,43 @@ class LocalSongScanner @Inject constructor(
             val names = albumArtistNames(first).map(LocalMusicIdentity::normalize).toSet()
             val year = tracks.mapNotNull(LocalTrackRecord::year).firstOrNull()
             val candidates = albums.values.filter { album ->
-                sameName(album.title, title) && (year == null || album.year == null || year == album.year) && albumArtists[album.id] == names
+                sameName(album.title, title) &&
+                    (year == null || album.year == null || year == album.year) &&
+                    albumArtists[album.id] == names
             }
-            val remote = candidates.filter { !it.isLocal }.singleOrNull()
-            val remoteId = tracks.mapNotNull(LocalTrackRecord::remoteAlbumId).distinct().singleOrNull()
-            val local = candidates.firstOrNull { it.isLocal && it.id in previousIds } ?: candidates.firstOrNull { it.isLocal }
-            val id = remoteId ?: remote?.id ?: local?.id ?: "LOCAL_ALBUM_${stableHash(albumKey(first))}"
+            val local = candidates.firstOrNull { it.isLocal && it.id in previousIds }
+                ?: candidates.firstOrNull { it.isLocal }
+            val id = local?.id ?: "LOCAL_ALBUM_${stableHash(albumKey(first))}"
             val existing = database.albumEntity(id)
-            val localAlbum = existing?.isLocal ?: (remoteId == null && remote == null)
             val thumbnail = tracks.firstNotNullOfOrNull { it.thumbnailUrl }
                 ?: tracks.firstNotNullOfOrNull { it.mediaStoreThumbnailUrl }
             val duration = tracks.sumOf { it.durationSeconds.toLong() }.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
             val entity = if (existing != null) {
-                if (existing.isLocal) existing.copy(
+                existing.copy(
                     title = title,
                     year = year,
                     thumbnailUrl = thumbnail ?: existing.thumbnailUrl,
                     songCount = tracks.size,
                     duration = duration,
-                ) else existing.copy(year = existing.year ?: year, thumbnailUrl = existing.thumbnailUrl ?: thumbnail)
-            } else AlbumEntity(
-                id = id,
-                title = title,
-                year = year,
-                thumbnailUrl = thumbnail,
-                songCount = tracks.size,
-                duration = duration,
-                isLocal = localAlbum,
-            )
+                )
+            } else {
+                AlbumEntity(
+                    id = id,
+                    title = title,
+                    year = year,
+                    thumbnailUrl = thumbnail,
+                    songCount = tracks.size,
+                    duration = duration,
+                    isLocal = true,
+                )
+            }
             database.deleteLocalMusicAlias(id, "album")
             database.upsert(entity)
-            if (localAlbum || existing == null || database.albumArtistEntities(id).isEmpty()) {
-                if (localAlbum) database.deleteAlbumArtistMapsByAlbumIds(listOf(id))
-                artistIds.forEachIndexed { index, artistId -> database.insert(AlbumArtistMap(albumId = id, artistId = artistId, order = index)) }
+            if (existing == null || database.albumArtistEntities(id).isEmpty()) {
+                database.deleteAlbumArtistMapsByAlbumIds(listOf(id))
+                artistIds.forEachIndexed { index, artistId ->
+                    database.insert(AlbumArtistMap(albumId = id, artistId = artistId, order = index))
+                }
             }
             candidates.filter { it.isLocal && it.id != id }.forEach { obsolete ->
                 database.mergeLocalAlbum(obsolete.id, id)
@@ -397,7 +331,12 @@ class LocalSongScanner @Inject constructor(
             val artistIndex = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val albumIndex = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
             val albumIdIndex = it.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
-            val albumArtistIndex = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) it.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST) else -1
+            val albumArtistIndex =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    it.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
+                } else {
+                    -1
+                }
             val durationIndex = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val yearIndex = it.getColumnIndex(MediaStore.Audio.Media.YEAR)
             val trackIndex = it.getColumnIndex(MediaStore.Audio.Media.TRACK)
@@ -417,8 +356,8 @@ class LocalSongScanner @Inject constructor(
                 val modified = it.getLong(modifiedIndex)
                 val size = it.getLong(sizeIndex).coerceAtLeast(0L)
                 val metadata = metadataReader.read(uri, modified, size)
-                val duration = metadata.durationSeconds ?: (it.getLong(durationIndex).coerceAtLeast(0L) / 1000L)
-                    .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                val duration = metadata.durationSeconds
+                    ?: (it.getLong(durationIndex).coerceAtLeast(0L) / 1000L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                 if (duration < scanConfig.sanitizedMinimumDurationSeconds) continue
                 val artist = metadata.artist ?: cleanTag(it.getStringOrNull(artistIndex))
                 val album = metadata.album ?: cleanTag(it.getStringOrNull(albumIndex))
@@ -442,8 +381,10 @@ class LocalSongScanner @Inject constructor(
                     thumbnailUrl = metadata.thumbnailUrl,
                     mediaStoreThumbnailUrl = albumId?.takeIf { album != null }
                         ?.let { value -> ContentUris.withAppendedId(AlbumArtUri, value).toString() },
-                    embeddedLyrics = lyricsExtractor.extract(contentUri = uri, displayName = displayName, mimeType = mime)
-                        ?.let(LyricsUtils::lyricsOrNotFound)?.takeIf { value -> value != LyricsEntity.LYRICS_NOT_FOUND },
+                    embeddedLyrics = lyricsExtractor
+                        .extract(contentUri = uri, displayName = displayName, mimeType = mime)
+                        ?.trim()
+                        ?.takeIf(String::isNotBlank),
                 )
             }
         }
@@ -461,7 +402,9 @@ class LocalSongScanner @Inject constructor(
         track.albumArtist?.let(::splitArtistNames)?.takeIf { it.isNotEmpty() } ?: track.artists
 
     private fun albumKey(track: LocalTrackRecord): String =
-        "${LocalMusicIdentity.normalize(track.albumName.orEmpty())}|${albumArtistNames(track).map(LocalMusicIdentity::normalize).sorted().joinToString("\u0000")}"
+        "${LocalMusicIdentity.normalize(track.albumName.orEmpty())}|${
+            albumArtistNames(track).map(LocalMusicIdentity::normalize).sorted().joinToString("\u0000")
+        }"
 
     private fun sameName(first: String, second: String): Boolean =
         LocalMusicIdentity.normalize(first) == LocalMusicIdentity.normalize(second)
@@ -555,8 +498,6 @@ class LocalSongScanner @Inject constructor(
     private fun android.database.Cursor.getStringOrNull(columnIndex: Int): String? =
         if (columnIndex >= 0 && !isNull(columnIndex)) getString(columnIndex) else null
 
-    private data class EnrichedTracks(val tracks: List<LocalTrackRecord>, val lookupFailed: Boolean)
-
     private data class LocalTrackRecord(
         val id: String,
         val title: String,
@@ -573,10 +514,6 @@ class LocalSongScanner @Inject constructor(
         val thumbnailUrl: String?,
         val mediaStoreThumbnailUrl: String?,
         val embeddedLyrics: String?,
-        val remoteArtistId: String? = null,
-        val matchedArtistName: String? = null,
-        val artistThumbnailUrl: String? = null,
-        val remoteAlbumId: String? = null,
     )
 
     private companion object {

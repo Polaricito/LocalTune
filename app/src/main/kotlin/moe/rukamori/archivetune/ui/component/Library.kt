@@ -26,12 +26,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.db.entities.Album
 import moe.rukamori.archivetune.db.entities.Artist
 import moe.rukamori.archivetune.db.entities.Playlist
-import moe.rukamori.archivetune.innertube.models.PlaylistItem
-import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.ui.menu.AlbumMenu
 import moe.rukamori.archivetune.ui.menu.ArtistMenu
 import moe.rukamori.archivetune.ui.menu.PlaylistMenu
-import moe.rukamori.archivetune.ui.menu.YouTubePlaylistMenu
 import moe.rukamori.archivetune.ui.utils.navigateToAlbum
 import moe.rukamori.archivetune.ui.utils.navigateToArtist
 
@@ -199,44 +196,11 @@ fun LibraryPlaylistListItem(
         androidx.compose.material3.IconButton(
             onClick = {
                 menuState.show {
-                    if (playlist.playlist.isEditable || playlist.songCount != 0) {
-                        PlaylistMenu(
-                            playlist = playlist,
-                            coroutineScope = coroutineScope,
-                            onDismiss = menuState::dismiss,
-                        )
-                    } else {
-                        playlist.playlist.browseId?.let { browseId ->
-                            YouTubePlaylistMenu(
-                                playlist =
-                                    PlaylistItem(
-                                        id = browseId,
-                                        title = playlist.playlist.name,
-                                        author = null,
-                                        songCountText = null,
-                                        thumbnail = playlist.thumbnails.getOrNull(0) ?: "",
-                                        playEndpoint =
-                                            WatchEndpoint(
-                                                playlistId = browseId,
-                                                params = playlist.playlist.playEndpointParams,
-                                            ),
-                                        shuffleEndpoint =
-                                            WatchEndpoint(
-                                                playlistId = browseId,
-                                                params = playlist.playlist.shuffleEndpointParams,
-                                            ),
-                                        radioEndpoint =
-                                            WatchEndpoint(
-                                                playlistId = "RDAMPL$browseId",
-                                                params = playlist.playlist.radioEndpointParams,
-                                            ),
-                                        isEditable = false,
-                                    ),
-                                coroutineScope = coroutineScope,
-                                onDismiss = menuState::dismiss,
-                            )
-                        }
-                    }
+                    PlaylistMenu(
+                        playlist = playlist,
+                        coroutineScope = coroutineScope,
+                        onDismiss = menuState::dismiss,
+                    )
                 }
             },
         ) {
@@ -248,15 +212,7 @@ fun LibraryPlaylistListItem(
     }
 
     val openPlaylist: () -> Unit = {
-        if (
-            !playlist.playlist.isEditable &&
-            playlist.songCount == 0 &&
-            playlist.playlist.remoteSongCount != 0
-        ) {
-            navController.navigate("online_playlist/${playlist.playlist.browseId}")
-        } else {
-            navController.navigate("local_playlist/${playlist.id}")
-        }
+        navController.navigate("local_playlist/${playlist.id}")
     }
 
     LibraryPlaylistFeatureCard(

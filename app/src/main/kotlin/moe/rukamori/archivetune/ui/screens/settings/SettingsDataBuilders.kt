@@ -18,34 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
-import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.R
 
 @Composable
 fun buildSettingsGroups(
     navController: NavController,
     isAndroid12OrLater: Boolean,
-    hasUpdate: Boolean,
     context: Context,
 ): List<SettingsGroup> {
-    val account =
-        SettingsItem(
-            key = "account",
-            icon = painterResource(R.drawable.account),
-            title = stringResource(R.string.account),
-            subtitle = stringResource(R.string.settings_account_subtitle),
-            accentColor = MaterialTheme.colorScheme.primary,
-            onClick = { navController.navigate("settings/account") },
-        )
-    val stats =
-        SettingsItem(
-            key = "stats",
-            icon = painterResource(R.drawable.stats),
-            title = stringResource(R.string.settings_stats_title),
-            subtitle = stringResource(R.string.settings_stats_subtitle),
-            accentColor = MaterialTheme.colorScheme.primary,
-            onClick = { navController.navigate("stats") },
-        )
     val appearance =
         SettingsItem(
             key = "appearance",
@@ -64,42 +44,6 @@ fun buildSettingsGroups(
             accentColor = MaterialTheme.colorScheme.tertiary,
             onClick = { navController.navigate("settings/player") },
         )
-    val modules =
-        SettingsItem(
-            key = "modules",
-            icon = painterResource(R.drawable.extension),
-            title = stringResource(R.string.modules_title),
-            subtitle = stringResource(R.string.modules_subtitle),
-            accentColor = MaterialTheme.colorScheme.secondary,
-            onClick = { navController.navigate("settings/modules") },
-        )
-    val canvas =
-        SettingsItem(
-            key = "canvas",
-            icon = painterResource(R.drawable.motion_photos_on),
-            title = stringResource(R.string.archivetune_canvas),
-            subtitle = stringResource(R.string.canvas_settings_subtitle),
-            accentColor = MaterialTheme.colorScheme.tertiary,
-            onClick = { navController.navigate("settings/canvas") },
-        )
-    val lyrics =
-        SettingsItem(
-            key = "lyrics",
-            icon = painterResource(R.drawable.lyrics),
-            title = stringResource(R.string.lyrics),
-            subtitle = stringResource(R.string.settings_lyrics_subtitle),
-            accentColor = MaterialTheme.colorScheme.secondary,
-            onClick = { navController.navigate("settings/lyrics") },
-        )
-    val content =
-        SettingsItem(
-            key = "content",
-            icon = painterResource(R.drawable.language),
-            title = stringResource(R.string.content),
-            subtitle = stringResource(R.string.settings_content_subtitle),
-            accentColor = MaterialTheme.colorScheme.primary,
-            onClick = { navController.navigate("settings/content") },
-        )
     val behavior =
         SettingsItem(
             key = "behavior",
@@ -109,41 +53,14 @@ fun buildSettingsGroups(
             accentColor = MaterialTheme.colorScheme.primary,
             onClick = { navController.navigate("settings/privacy") },
         )
-    val integration =
+    val lyrics =
         SettingsItem(
-            key = "integration",
-            icon = painterResource(R.drawable.auto_awesome),
-            title = stringResource(R.string.integration),
-            subtitle = stringResource(R.string.settings_integration_subtitle),
-            accentColor = MaterialTheme.colorScheme.secondary,
-            onClick = { navController.navigate("settings/integration") },
-        )
-    val androidAuto =
-        SettingsItem(
-            key = "android_auto",
-            icon = painterResource(R.drawable.directions_car),
-            title = stringResource(R.string.android_auto),
-            subtitle = stringResource(R.string.android_auto_settings_subtitle),
-            accentColor = MaterialTheme.colorScheme.primary,
-            onClick = { navController.navigate("settings/android_auto") },
-        )
-    val aiIntegration =
-        SettingsItem(
-            key = "ai_integration",
-            icon = painterResource(R.drawable.ai),
-            title = stringResource(R.string.ai_integration),
-            subtitle = stringResource(R.string.ai_integration_desc),
-            accentColor = MaterialTheme.colorScheme.secondary,
-            onClick = { navController.navigate("settings/ai_integration") },
-        )
-    val internet =
-        SettingsItem(
-            key = "internet",
-            icon = painterResource(R.drawable.wifi_proxy),
-            title = stringResource(R.string.internet),
-            subtitle = stringResource(R.string.settings_internet_subtitle),
+            key = "lyrics",
+            icon = painterResource(R.drawable.lyrics),
+            title = stringResource(R.string.batch_lyrics_title),
+            subtitle = stringResource(R.string.batch_lyrics_short_subtitle),
             accentColor = MaterialTheme.colorScheme.tertiary,
-            onClick = { navController.navigate("settings/internet") },
+            onClick = { navController.navigate("settings/lyrics") },
         )
     val storage =
         SettingsItem(
@@ -218,31 +135,6 @@ fun buildSettingsGroups(
         } else {
             null
         }
-    val updates =
-        if (BuildConfig.UPDATER_AVAILABLE) {
-            SettingsItem(
-                key = "updates",
-                icon = painterResource(R.drawable.update),
-                title = stringResource(R.string.updates),
-                subtitle =
-                    if (hasUpdate) {
-                        stringResource(R.string.new_version_available)
-                    } else {
-                        stringResource(R.string.settings_updates_subtitle)
-                    },
-                showUpdateIndicator = hasUpdate,
-                accentColor =
-                    if (hasUpdate) {
-                        MaterialTheme.colorScheme.tertiary
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                badge = if (hasUpdate) "v${BuildConfig.VERSION_NAME}" else BuildConfig.VERSION_NAME,
-                onClick = { navController.navigate("settings/update") },
-            )
-        } else {
-            null
-        }
     val about =
         SettingsItem(
             key = "about",
@@ -255,16 +147,8 @@ fun buildSettingsGroups(
 
     return listOf(
         SettingsGroup(
-            title = stringResource(R.string.settings),
-            items = listOf(account, stats),
-        ),
-        SettingsGroup(
             title = stringResource(R.string.settings_section_player_content),
-            items = listOf(appearance, playback, canvas, lyrics, content, behavior),
-        ),
-        SettingsGroup(
-            title = stringResource(R.string.integration),
-            items = listOf(androidAuto, integration, modules, aiIntegration, internet),
+            items = listOf(appearance, playback, lyrics, behavior),
         ),
         SettingsGroup(
             title = stringResource(R.string.storage),
@@ -276,7 +160,6 @@ fun buildSettingsGroups(
                 buildList {
                     add(developerOptions)
                     defaultLinks?.let(::add)
-                    updates?.let(::add)
                     add(about)
                 },
         ),

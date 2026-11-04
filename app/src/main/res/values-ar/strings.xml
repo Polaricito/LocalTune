@@ -20,7 +20,6 @@
     <string name="quick_picks">اختيارات سريعة</string>
     <string name="forgotten_favorites">مفضلات منسية</string>
     <string name="keep_listening">واصل الاستماع</string>
-    <string name="your_youtube_playlists">قوائم تشغيل يوتيوب الخاصة بك</string>
     <string name="similar_to">مشابه لـ</string>
     <string name="new_release_albums">أحدث الألبومات</string>
     <string name="integration">الربط</string>
@@ -30,7 +29,6 @@
     <string name="last_week">الأسبوع الماضي</string>
     <string name="most_played_songs">الأغاني الأكثر استماعاً</string>
     <string name="search">البحث</string>
-    <string name="search_yt_music">البحث في YouTube Music</string>
     <string name="search_library">ابحث في المكتبة</string>
     <string name="filter_library">المكتبة</string>
     <string name="filter_liked">أعجبني</string>
@@ -531,7 +529,6 @@
     <string name="list_view">عرض القائمة</string>
     <string name="grid_view">عرض الشبكة</string>
     <string name="personal_label">شخصي</string>
-    <string name="youtube_synced">متزامن مع YouTube</string>
     <string name="options_label">خيارات</string>
     <string name="top_artist_badge">أفضل فنان</string>
     <string name="no_artist_yet">لا يوجد فنان بعد</string>
@@ -1062,7 +1059,6 @@
     <string name="unsaved_account_dialog_cancel">إلغاء تسجيل الدخول</string>
     <string name="unsaved_account_dialog_no_thanks">لا شكراً</string>
     <string name="unsaved_account_dialog_save_yes">نعم، احفظ الحساب الحالي</string>
-    <string name="youtube_channels">قنوات YouTube</string>
     <string name="hidden_playlists">قوائم التشغيل المخفية</string>
     <string name="hidden_playlists_description">تظهر هنا قوائم التشغيل المخفية من المكتبة</string>
     <string name="no_hidden_playlists">لا توجد قوائم تشغيل مخفية</string>

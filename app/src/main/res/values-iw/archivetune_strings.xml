@@ -171,8 +171,6 @@
     <string name="sync_playlist">סנכרון פלייליסט</string>
     <string name="playlist_sync_progress_step">%1$d/%2$d שירים</string>
     <string name="playlist_sync_failed">סנכרון פלייליסט נכשל: %1$s</string>
-    <string name="sync_disabled">הסנכרון מושבת</string>
-    <string name="allows_for_sync_witch_youtube">הערה: זה מאפשר סנכרון עם YouTube Music. לא ניתן לשנות זאת מאוחר יותר.</string>
     <string name="generating_image">יוצר תמונה</string>
     <string name="please_wait">אנא המתן</string>
     <string name="cancel">ביטול</string>
@@ -342,7 +340,6 @@
     <string name="clear_canvas_cache">נקה את מטמון הקנבס</string>
     <string name="clear_canvas_cache_dialog">האם אתה בטוח שאתה רוצה לנקות את כל הקנבס המאוחסן במטמון?</string>
     <string name="disable">השבת</string>
-    <string name="not_logged_in_youtube">לא מחובר ל-YouTube</string>
     <string name="default_links">פתח קישורים נתמכים</string>
     <string name="open_app_settings_error">לא ניתן היה לפתוח את הגדרות האפליקציה</string>
     <string name="release_notes">הערות שחרור</string>

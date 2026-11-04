@@ -284,7 +284,7 @@ fun AppearanceSettings(navController: NavController) {
     val (defaultOpenTab, onDefaultOpenTabChange) =
         rememberEnumPreference(
             DefaultOpenTabKey,
-            defaultValue = NavigationTab.HOME,
+            defaultValue = NavigationTab.SEARCH,
         )
     val (playerButtonsStyle, onPlayerButtonsStyleChange) =
         rememberEnumPreference(
@@ -435,7 +435,7 @@ fun AppearanceSettings(navController: NavController) {
     val (defaultChip, onDefaultChipChange) =
         rememberEnumPreference(
             key = ChipSortTypeKey,
-            defaultValue = LibraryFilter.LIBRARY,
+            defaultValue = LibraryFilter.PLAYLISTS,
         )
     val supportedHighestFps = rememberSupportedHighestFps()
     val isHighRefreshRateSupported = supportedHighestFps > HIGH_REFRESH_RATE_THRESHOLD_FPS
@@ -1130,9 +1130,9 @@ fun AppearanceSettings(navController: NavController) {
                         onValueSelected = onDefaultOpenTabChange,
                         valueText = {
                             when (it) {
-                                NavigationTab.HOME -> stringResource(R.string.home)
                                 NavigationTab.SEARCH -> stringResource(R.string.search)
                                 NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
+                                NavigationTab.HISTORY -> stringResource(R.string.history)
                             }
                         },
                     )
@@ -1150,9 +1150,6 @@ fun AppearanceSettings(navController: NavController) {
                                 LibraryFilter.ARTISTS -> stringResource(R.string.artists)
                                 LibraryFilter.ALBUMS -> stringResource(R.string.albums)
                                 LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                                LibraryFilter.PODCASTS -> stringResource(R.string.podcast)
-                                LibraryFilter.SPOTIFY -> stringResource(R.string.spotify_playlists)
-                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
                             }
                         },
                         onValueSelected = onDefaultChipChange,
@@ -1374,9 +1371,9 @@ enum class DarkMode {
 }
 
 enum class NavigationTab {
-    HOME,
     SEARCH,
     LIBRARY,
+    HISTORY,
 }
 
 enum class PlayerTextAlignment {

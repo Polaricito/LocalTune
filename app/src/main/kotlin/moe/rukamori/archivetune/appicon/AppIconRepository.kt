@@ -104,10 +104,12 @@ class AppIconRepository
             }
 
         private fun readGeneratedIcons(): List<GeneratedAppIcon> =
-            context.assets
-                .open(CatalogAssetPath)
-                .bufferedReader()
-                .use { reader -> json.decodeFromString<List<GeneratedAppIcon>>(reader.readText()) }
+            runCatching {
+                context.assets
+                    .open(CatalogAssetPath)
+                    .bufferedReader()
+                    .use { reader -> json.decodeFromString<List<GeneratedAppIcon>>(reader.readText()) }
+            }.getOrElse { emptyList() }
 
         private fun launcherAliases(generatedIcons: List<GeneratedAppIcon>): List<LauncherAlias> =
             buildList(generatedIcons.size + 1) {

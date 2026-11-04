@@ -17,7 +17,6 @@
     <string name="speed_dial">تشغيل سريع</string>
     <string name="forgotten_favorites">المفضلات اللي نسيتها</string>
     <string name="keep_listening">كمل سماع</string>
-    <string name="your_youtube_playlists">البلاي ليستات بتاعتك على يوتيوب</string>
     <string name="similar_to">زي</string>
     <string name="new_release_albums">أجدد الألبومات</string>
     <string name="integration">ربط</string>
@@ -27,7 +26,6 @@
     <string name="last_week">الأسبوع اللي فات</string>
     <string name="most_played_songs">أكتر أغاني شغلتها</string>
     <string name="search">البحث</string>
-    <string name="search_yt_music">دور في يوتيوب ميوزك</string>
     <string name="search_library">دور في المكتبة</string>
     <string name="filter_library">المكتبة</string>
     <string name="filter_liked">عجبتني</string>
@@ -171,7 +169,6 @@
     <string name="list_view">عرض كقائمة</string>
     <string name="grid_view">عرض كشبكة</string>
     <string name="personal_label">شخصي</string>
-    <string name="youtube_synced">متزامن مع يوتيوب</string>
     <string name="options_label">خيارات</string>
     <string name="top_artist_badge">أحسن فنان</string>
     <string name="no_artist_yet">مفيش فنانين لسه</string>
@@ -929,7 +926,6 @@
     <string name="unsaved_account_dialog_cancel">إلغاء تسجيل الدخول</string>
     <string name="unsaved_account_dialog_no_thanks">لا شكراً</string>
     <string name="unsaved_account_dialog_save_yes">نعم، احفظ الحساب الحالي</string>
-    <string name="youtube_channels">قنوات يوتيوب</string>
     <string name="hidden_playlists">البلاي ليستات المخفية</string>
     <string name="hidden_playlists_description">البلاي ليستات المخفية من المكتبة هتظهر هنا</string>
     <string name="no_hidden_playlists">مفيش بلاي ليستات مخفية</string>

@@ -17,7 +17,6 @@
     <string name="speed_dial">गति डायल</string>
     <string name="forgotten_favorites">भूले हुए पसंदीदा</string>
     <string name="keep_listening">सुनते रहिए</string>
-    <string name="your_youtube_playlists">आपकी YouTube प्लेलिस्ट</string>
     <string name="similar_to">के समान</string>
     <string name="new_release_albums">नए प्रकाशित एल्बम</string>
     <string name="integration">समाकलन करे</string>
@@ -27,7 +26,6 @@
     <string name="last_week">पिछले सप्ताह</string>
     <string name="most_played_songs">सबसे ज्यादा बजने वाले गाने</string>
     <string name="search">ढूंढ़े</string>
-    <string name="search_yt_music">YouTube संगीत ढुंढे…</string>
     <string name="search_library">लाइब्रेरी खोजें…</string>
     <string name="filter_library">लाइब्रेरी</string>
     <string name="filter_liked">पसंद</string>

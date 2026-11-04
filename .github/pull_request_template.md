@@ -20,12 +20,10 @@
 - [ ] UI / UX
 - [ ] Performance / memory
 - [ ] Playback / Media3
-- [ ] Lyrics / provider integration
-- [ ] Search / YouTube / network data
+- [ ] Lyrics / local transcription
 - [ ] Local library / Room database
 - [ ] Widgets / notification / shortcuts
 - [ ] Settings / preferences / DataStore
-- [ ] Discord / Last.fm / ListenBrainz / external integration
 - [ ] Localization / strings / fastlane metadata
 - [ ] Build / Gradle / CI / release packaging
 - [ ] Dependency update
@@ -36,12 +34,7 @@
 <!-- Be explicit so reviewers can focus on the correct runtime paths. -->
 
 - [ ] `:app`
-- [ ] `:core`
-- [ ] `:lyrics`
-- [ ] `:lastfm`
-- [ ] `:canvas`
-- [ ] `:shazamkit`
-- [ ] `:spotifycore`
+- [ ] `app/src/main/cpp` (whisper.cpp / JNI)
 - [ ] Other:
 
 ## Screenshots / Recordings
@@ -81,26 +74,26 @@
 ## Concurrency / Performance Checklist
 
 - [ ] Business coroutines are scoped to `viewModelScope` or an existing lifecycle-owned application/service scope.
-- [ ] Disk, database, network, parsing, and heavy mapping work is dispatched to `Dispatchers.IO` or `Dispatchers.Default`.
-- [ ] Cancellation is handled explicitly where long-running work, playback, downloads, sync, lyrics fetching, or recognition is involved.
+- [ ] Disk, database, parsing, and heavy mapping work is dispatched to `Dispatchers.IO` or `Dispatchers.Default`.
+- [ ] Cancellation is handled explicitly where long-running work, playback, scanning, or transcription is involved.
 - [ ] The change avoids blocking the main thread.
-- [ ] The change avoids unnecessary allocations in recomposition loops, playback loops, polling loops, and provider parsing paths.
-- [ ] Large lists, images, lyrics payloads, and network responses are bounded, streamed, cached, paged, or mapped off the main thread as appropriate.
+- [ ] The change avoids unnecessary allocations in recomposition loops, playback loops, and scanning paths.
+- [ ] Large lists, images, lyrics payloads, and audio buffers are bounded, streamed, cached, paged, or mapped off the main thread as appropriate.
 
 ## Data / Persistence Checklist
 
 - [ ] Room entity, DAO, or database changes include a schema update under `app/schemas`.
 - [ ] Database migrations preserve existing user data and fail clearly when migration is impossible.
 - [ ] DataStore or preference-key changes are backward compatible.
-- [ ] Network DTOs remain isolated from UI models.
-- [ ] Provider responses handle missing, malformed, regional, or rate-limited data without crashing the app.
+- [ ] Local media identifiers and `.lrc` sidecar handling remain stable across rescans.
+- [ ] MediaStore queries handle missing, malformed, or permission-denied data without crashing the app.
 
 ## Playback / Integration Checklist
 
 - [ ] Media3 playback, queue, cache, and service behavior remains stable across foreground, background, notification, and process recreation paths.
 - [ ] Audio focus, notification controls, widgets, shortcuts, and media session actions are considered when playback behavior changes.
-- [ ] External integrations handle absent credentials, revoked auth, network failure, and API changes.
 - [ ] Native, AAR, or ABI-sensitive changes account for mobile/tv and `universal`, `arm64`, `armeabi`, `x86`, and `x86_64` variants.
+- [ ] whisper.cpp/JNI changes still build for all four ABIs and keep the model license files.
 
 ## Localization / Assets Checklist
 
@@ -111,10 +104,10 @@
 
 ## Privacy / Security Checklist
 
-- [ ] No secrets, keys, tokens, keystores, signing files, private certificates, or local machine paths are committed.
-- [ ] Logs do not expose access tokens, cookies, auth headers, user identifiers, listening history, or local file paths.
-- [ ] New network calls are justified by the feature and use existing client, proxy, timeout, and error-handling patterns.
-- [ ] User data remains local unless the PR explicitly documents the integration and consent path.
+- [ ] No secrets, keys, tokens, keystores, signing files, private certificates, or local machine paths are committed, except the documented public release keystore.
+- [ ] Logs do not expose user identifiers, listening history, or local file paths.
+- [ ] No network calls or `INTERNET` permission are introduced.
+- [ ] User data remains local unless the PR explicitly documents a new local storage path.
 
 ## Verification
 

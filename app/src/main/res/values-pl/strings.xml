@@ -19,7 +19,6 @@
     <string name="speed_dial">Szybkie wybieranie</string>
     <string name="forgotten_favorites">Zapomniane ulubione</string>
     <string name="keep_listening">Słuchaj dalej</string>
-    <string name="your_youtube_playlists">Twoje playlisty YouTube</string>
     <string name="similar_to">Podobne do</string>
     <string name="new_release_albums">Nowe albumy</string>
     <string name="integration">Integracja</string>
@@ -29,7 +28,6 @@
     <string name="last_week">W zeszłym tygodniu</string>
     <string name="most_played_songs">najczęściej odtwarzane utwory</string>
     <string name="search">Wyszukaj</string>
-    <string name="search_yt_music">Szukaj YouTube Music</string>
     <string name="search_library">Szukaj biblioteki</string>
     <string name="filter_library">Biblioteka</string>
     <string name="filter_liked">Polubione</string>
@@ -88,7 +86,6 @@
     <string name="list_view">widok listy</string>
     <string name="grid_view">Widok siatki</string>
     <string name="personal_label">Osobiste</string>
-    <string name="youtube_synced">Zsynchronizowano z YouTube</string>
     <string name="options_label">Opcje</string>
     <string name="top_artist_badge">Najpopularniejsi wykonawcy</string>
     <string name="no_artist_yet">Brak wykonawcy</string>

@@ -10,7 +10,6 @@
     <string name="quick_picks">Escolhas rápidas</string>
     <string name="forgotten_favorites">Favoritos esquecidos</string>
     <string name="keep_listening">Continua a ouvir</string>
-    <string name="your_youtube_playlists">As tuas listas do YouTube</string>
     <string name="similar_to">Semelhante a</string>
     <string name="stats">Estatísticas</string>
     <string name="integration">Integração</string>
@@ -20,7 +19,6 @@
     <string name="last_week">Última semana</string>
     <string name="most_played_songs">Músicas mais tocadas</string>
     <string name="search">Pesquisar</string>
-    <string name="search_yt_music">Pesquisar no Youtube Music</string>
     <string name="search_library">Pesquisar na biblioteca</string>
     <string name="new_release_albums">Álbuns recém-lançados</string>
     <string name="filter_library">Biblioteca</string>
@@ -82,7 +80,6 @@
     <string name="list_view">Ver em Lista</string>
     <string name="grid_view">Ver em Grade</string>
     <string name="personal_label">Pessoal</string>
-    <string name="youtube_synced">Sincronizado com o YouTube</string>
     <string name="options_label">Opções</string>
     <string name="top_artist_badge">TOP ARTISTAS</string>
     <plurals name="n_selected">
@@ -1029,7 +1026,6 @@
     <string name="unsaved_account_dialog_cancel">Cancelar login</string>
     <string name="unsaved_account_dialog_no_thanks">Não, obrigado</string>
     <string name="unsaved_account_dialog_save_yes">Sim, guardar conta atual</string>
-    <string name="youtube_channels">Canais do YouTube</string>
     <string name="hidden_playlists">Listas de reprodução ocultas</string>
     <string name="hidden_playlists_description">Listas ocultas da biblioteca aparecem aqui</string>
     <string name="no_hidden_playlists">Nenhuma lista de reprodução oculta</string>

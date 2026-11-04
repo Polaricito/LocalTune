@@ -7,8 +7,6 @@
 
 package moe.rukamori.archivetune.lyrics
 
-import kotlinx.coroutines.flow.MutableStateFlow
-
 data class WordTimestamp(
     val text: String,
     val startTime: Double,
@@ -23,14 +21,8 @@ data class LyricsEntry(
     val agent: String? = null,
     val isInstrumental: Boolean = false,
     val durationMs: Long = 0L,
-    val providerRomanizedText: String? = null,
-    val providerRomanizedWords: List<String>? = null,
-    val providerRomanizedLanguage: String? = null,
-    val providerTranslationText: String? = null,
-    val isRtl: Boolean? = null,
-    val romanizedTextFlow: MutableStateFlow<String?> = MutableStateFlow(null),
 ) : Comparable<LyricsEntry> {
-    override fun compareTo(other: LyricsEntry): Int = (time - other.time).toInt()
+    override fun compareTo(other: LyricsEntry): Int = time.compareTo(other.time)
 
     companion object {
         val HEAD_LYRICS_ENTRY = LyricsEntry(0L, "")

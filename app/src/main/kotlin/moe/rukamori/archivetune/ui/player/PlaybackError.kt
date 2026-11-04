@@ -64,26 +64,21 @@ import moe.rukamori.archivetune.R
 @Composable
 fun PlaybackErrorDialog(
     error: PlaybackException,
-    showLoginAction: Boolean,
     onRetry: () -> Unit,
     onClose: () -> Unit,
-    onLogin: () -> Unit,
 ) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val fallbackUnknown = stringResource(R.string.playback_error_unknown)
-    val fallbackNoInternet = stringResource(R.string.playback_error_no_internet)
-    val fallbackTimeout = stringResource(R.string.error_timeout)
+    val fallbackFileUnavailable = stringResource(R.string.playback_error_file_unavailable)
     val fallbackNoStream = stringResource(R.string.error_no_stream)
     val fallbackMalformedStream = stringResource(R.string.error_malformed_stream)
     val retryText = stringResource(R.string.retry)
     val closeText = stringResource(R.string.close)
     val copyText = stringResource(R.string.copy)
     val copiedText = stringResource(R.string.copied)
-    val loginText = stringResource(R.string.login)
     val detailsText = stringResource(R.string.playback_error_details)
     val codeLabel = stringResource(R.string.playback_error_code)
-    val httpLabel = stringResource(R.string.playback_error_http)
     val messageLabel = stringResource(R.string.playback_error_message)
     val causeLabel = stringResource(R.string.playback_error_cause)
     val appVersion =
@@ -93,33 +88,17 @@ fun PlaybackErrorDialog(
             BuildConfig.VERSION_CODE,
         )
     val errorInfo = remember(error) { error.toPlaybackErrorInfo() }
-    val httpCode = errorInfo.httpCode
     val title =
         when (errorInfo.kind) {
-            PlaybackErrorKind.LoginRefreshRequired -> stringResource(R.string.playback_login_refresh_required)
-            PlaybackErrorKind.ConfirmationRequired -> stringResource(R.string.playback_confirmation_required)
-            PlaybackErrorKind.NoInternet -> fallbackNoInternet
-            PlaybackErrorKind.Timeout -> fallbackTimeout
+            PlaybackErrorKind.FileUnavailable -> fallbackFileUnavailable
             PlaybackErrorKind.NoStream -> fallbackNoStream
             PlaybackErrorKind.MalformedStream -> fallbackMalformedStream
             else -> fallbackUnknown
         }
     val reason =
         when (errorInfo.kind) {
-            PlaybackErrorKind.LoginRefreshRequired -> {
-                stringResource(R.string.playback_requires_youtube_music_login_refresh)
-            }
-
-            PlaybackErrorKind.ConfirmationRequired -> {
-                stringResource(R.string.playback_requires_youtube_music_confirmation)
-            }
-
-            PlaybackErrorKind.NoInternet -> {
-                fallbackNoInternet
-            }
-
-            PlaybackErrorKind.Timeout -> {
-                fallbackTimeout
+            PlaybackErrorKind.FileUnavailable -> {
+                fallbackFileUnavailable
             }
 
             PlaybackErrorKind.NoStream -> {
@@ -134,10 +113,6 @@ fun PlaybackErrorDialog(
                 "$fallbackUnknown ($codeLabel ${error.errorCode})"
             }
 
-            PlaybackErrorKind.Http -> {
-                "$fallbackUnknown ($httpLabel $httpCode)"
-            }
-
             PlaybackErrorKind.Unknown -> {
                 error.cause?.message?.takeIf { it.isNotBlank() }
                     ?: error.message?.takeIf { it.isNotBlank() }
@@ -145,14 +120,12 @@ fun PlaybackErrorDialog(
             }
         }
     val details =
-        remember(error, reason, appVersion, httpCode, codeLabel, httpLabel, messageLabel, causeLabel) {
+        remember(error, reason, appVersion, codeLabel, messageLabel, causeLabel) {
             buildPlaybackErrorDetails(
                 error = error,
                 reason = reason,
                 appVersion = appVersion,
-                httpCode = httpCode,
                 codeLabel = codeLabel,
-                httpLabel = httpLabel,
                 messageLabel = messageLabel,
                 causeLabel = causeLabel,
             )
@@ -206,12 +179,9 @@ fun PlaybackErrorDialog(
                             retryText = retryText,
                             closeText = closeText,
                             copyText = copyText,
-                            loginText = loginText,
-                            showLoginAction = showLoginAction,
                             onRetry = onRetry,
                             onClose = onClose,
                             onCopy = onCopyClick,
-                            onLogin = onLogin,
                         )
                     } else {
                         PlaybackErrorCompactContent(
@@ -222,12 +192,9 @@ fun PlaybackErrorDialog(
                             retryText = retryText,
                             closeText = closeText,
                             copyText = copyText,
-                            loginText = loginText,
-                            showLoginAction = showLoginAction,
                             onRetry = onRetry,
                             onClose = onClose,
                             onCopy = onCopyClick,
-                            onLogin = onLogin,
                         )
                     }
                 }
@@ -245,12 +212,9 @@ private fun PlaybackErrorCompactContent(
     retryText: String,
     closeText: String,
     copyText: String,
-    loginText: String,
-    showLoginAction: Boolean,
     onRetry: () -> Unit,
     onClose: () -> Unit,
     onCopy: () -> Unit,
-    onLogin: () -> Unit,
 ) {
     Column(
         modifier =
@@ -276,12 +240,9 @@ private fun PlaybackErrorCompactContent(
             retryText = retryText,
             closeText = closeText,
             copyText = copyText,
-            loginText = loginText,
-            showLoginAction = showLoginAction,
             onRetry = onRetry,
             onClose = onClose,
             onCopy = onCopy,
-            onLogin = onLogin,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -296,12 +257,9 @@ private fun PlaybackErrorExpandedContent(
     retryText: String,
     closeText: String,
     copyText: String,
-    loginText: String,
-    showLoginAction: Boolean,
     onRetry: () -> Unit,
     onClose: () -> Unit,
     onCopy: () -> Unit,
-    onLogin: () -> Unit,
 ) {
     Row(
         modifier =
@@ -331,12 +289,9 @@ private fun PlaybackErrorExpandedContent(
                 retryText = retryText,
                 closeText = closeText,
                 copyText = copyText,
-                loginText = loginText,
-                showLoginAction = showLoginAction,
                 onRetry = onRetry,
                 onClose = onClose,
                 onCopy = onCopy,
-                onLogin = onLogin,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -456,12 +411,9 @@ private fun PlaybackErrorActions(
     retryText: String,
     closeText: String,
     copyText: String,
-    loginText: String,
-    showLoginAction: Boolean,
     onRetry: () -> Unit,
     onClose: () -> Unit,
     onCopy: () -> Unit,
-    onLogin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FlowRow(
@@ -474,14 +426,6 @@ private fun PlaybackErrorActions(
                 icon = R.drawable.close,
                 label = closeText,
             )
-        }
-        if (showLoginAction) {
-            OutlinedButton(onClick = onLogin) {
-                PlaybackErrorActionContent(
-                    icon = R.drawable.login,
-                    label = loginText,
-                )
-            }
         }
         FilledTonalButton(onClick = onCopy) {
             PlaybackErrorActionContent(
@@ -516,9 +460,7 @@ private fun buildPlaybackErrorDetails(
     error: PlaybackException,
     reason: String,
     appVersion: String,
-    httpCode: Int?,
     codeLabel: String,
-    httpLabel: String,
     messageLabel: String,
     causeLabel: String,
 ): String =
@@ -526,7 +468,6 @@ private fun buildPlaybackErrorDetails(
         appendLine(appVersion)
         appendLine(reason)
         appendLine("$codeLabel: ${error.errorCode}")
-        if (httpCode != null) appendLine("$httpLabel: $httpCode")
 
         val rootMessage = error.message?.trim().orEmpty()
         if (rootMessage.isNotBlank() && rootMessage != reason) {

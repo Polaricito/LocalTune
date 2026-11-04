@@ -40,17 +40,12 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.ArtistSeparatorsKey
 import moe.rukamori.archivetune.constants.AudioNormalizationKey
 import moe.rukamori.archivetune.constants.AudioOffload
-import moe.rukamori.archivetune.constants.AudioQuality
-import moe.rukamori.archivetune.constants.AudioQualityKey
-import moe.rukamori.archivetune.constants.AutoDownloadOnLikeKey
 import moe.rukamori.archivetune.constants.AutoSkipNextOnErrorKey
 import moe.rukamori.archivetune.constants.AutoStartOnBluetoothKey
 import moe.rukamori.archivetune.constants.CrossfadeDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
 import moe.rukamori.archivetune.constants.DeviceMutePlaybackRecoveryVolumeKey
-import moe.rukamori.archivetune.constants.ExternalDownloaderEnabledKey
-import moe.rukamori.archivetune.constants.ExternalDownloaderPackageKey
 import moe.rukamori.archivetune.constants.HISTORY_DURATION_DEFAULT
 import moe.rukamori.archivetune.constants.HistoryDuration
 import moe.rukamori.archivetune.constants.PauseOnDeviceMuteKey
@@ -60,7 +55,6 @@ import moe.rukamori.archivetune.constants.SeekExtraSeconds
 import moe.rukamori.archivetune.constants.SkipSilenceKey
 import moe.rukamori.archivetune.constants.StopMusicOnTaskClearKey
 import moe.rukamori.archivetune.constants.WakelockKey
-import moe.rukamori.archivetune.sponsorblock.DEFAULT_SPONSOR_BLOCK_API_URL
 import moe.rukamori.archivetune.ui.component.ArtistSeparatorsDialog
 import moe.rukamori.archivetune.ui.component.CrossfadeSliderPreference
 import moe.rukamori.archivetune.ui.component.EnumListPreference
@@ -76,79 +70,10 @@ import moe.rukamori.archivetune.ui.component.TextFieldDialog
 import moe.rukamori.archivetune.ui.utils.backToMain
 import moe.rukamori.archivetune.utils.rememberEnumPreference
 import moe.rukamori.archivetune.utils.rememberPreference
-import moe.rukamori.archivetune.viewmodels.PlaybackPerformanceSettingsUiState
-import moe.rukamori.archivetune.viewmodels.PlaybackPerformanceSettingsViewModel
-import moe.rukamori.archivetune.viewmodels.SponsorBlockCategoryUiModel
-import moe.rukamori.archivetune.viewmodels.SponsorBlockSettingsScreenState
-import moe.rukamori.archivetune.viewmodels.SponsorBlockSettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerSettings(navController: NavController) {
-    val playbackPerformanceSettingsViewModel: PlaybackPerformanceSettingsViewModel =
-        hiltViewModel()
-    val playbackPerformanceSettingsState by
-        playbackPerformanceSettingsViewModel.uiState.collectAsStateWithLifecycle()
-    val onLowDataModeChange =
-        remember(playbackPerformanceSettingsViewModel) {
-            playbackPerformanceSettingsViewModel::onLowDataModeChange
-        }
-    val onPreloadNextSongChange =
-        remember(playbackPerformanceSettingsViewModel) {
-            playbackPerformanceSettingsViewModel::onPreloadNextSongChange
-        }
-    val onPlaybackPerformanceRetry =
-        remember(playbackPerformanceSettingsViewModel) {
-            playbackPerformanceSettingsViewModel::retry
-        }
-    val sponsorBlockSettingsViewModel: SponsorBlockSettingsViewModel = hiltViewModel()
-    val sponsorBlockSettingsState by
-        sponsorBlockSettingsViewModel.uiState.collectAsStateWithLifecycle()
-    val onSponsorBlockEnabledChange =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onEnabledChange
-        }
-    val onSponsorBlockCategorySheetOpen =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onCategorySheetOpen
-        }
-    val onSponsorBlockCategorySheetDismiss =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onCategorySheetDismiss
-        }
-    val onSponsorBlockCategoryCheckedChange =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onCategoryOptionCheckedChange
-        }
-    val onSponsorBlockCategorySelectionConfirm =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onCategorySelectionConfirm
-        }
-    val onSponsorBlockApiUrlEditorOpen =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onApiUrlEditorOpen
-        }
-    val onSponsorBlockApiUrlEditorDismiss =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onApiUrlEditorDismiss
-        }
-    val onSponsorBlockApiUrlDraftChange =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onApiUrlDraftChange
-        }
-    val onSponsorBlockApiUrlConfirm =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::onApiUrlConfirm
-        }
-    val onSponsorBlockRetry =
-        remember(sponsorBlockSettingsViewModel) {
-            sponsorBlockSettingsViewModel::retry
-        }
-    val (audioQuality, onAudioQualityChange) =
-        rememberEnumPreference(
-            AudioQualityKey,
-            defaultValue = AudioQuality.AUTO,
-        )
     val (persistentQueue, onPersistentQueueChange) =
         rememberPreference(
             PersistentQueueKey,
@@ -181,11 +106,6 @@ fun PlayerSettings(navController: NavController) {
             defaultValue = false,
         )
 
-    val (autoDownloadOnLike, onAutoDownloadOnLikeChange) =
-        rememberPreference(
-            AutoDownloadOnLikeKey,
-            defaultValue = false,
-        )
     val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) =
         rememberPreference(
             AutoSkipNextOnErrorKey,
@@ -241,24 +161,12 @@ fun PlayerSettings(navController: NavController) {
             ArtistSeparatorsKey,
             defaultValue = ",;/&",
         )
-    val (externalDownloaderEnabled, onExternalDownloaderEnabledChange) =
-        rememberPreference(
-            ExternalDownloaderEnabledKey,
-            defaultValue = false,
-        )
-    val (externalDownloaderPackage, onExternalDownloaderPackageChange) =
-        rememberPreference(
-            ExternalDownloaderPackageKey,
-            defaultValue = "",
-        )
-
     val (wakelockEnabled, onWakelockChange) =
         rememberPreference(
             WakelockKey,
             defaultValue = false,
         )
     var showArtistSeparatorsDialog by remember { mutableStateOf(false) }
-    var showExternalDownloaderPackageDialog by remember { mutableStateOf(false) }
 
     if (showArtistSeparatorsDialog) {
         ArtistSeparatorsDialog(
@@ -270,28 +178,6 @@ fun PlayerSettings(navController: NavController) {
             },
         )
     }
-
-    if (showExternalDownloaderPackageDialog) {
-        TextFieldDialog(
-            initialTextFieldValue =
-                androidx.compose.ui.text.input
-                    .TextFieldValue(externalDownloaderPackage),
-            onDone = { pkg ->
-                onExternalDownloaderPackageChange(pkg.trim())
-                showExternalDownloaderPackageDialog = false
-            },
-            onDismiss = { showExternalDownloaderPackageDialog = false },
-            singleLine = true,
-            maxLines = 1,
-        )
-    }
-
-    SponsorBlockApiUrlDialog(
-        state = sponsorBlockSettingsState,
-        onValueChange = onSponsorBlockApiUrlDraftChange,
-        onConfirm = onSponsorBlockApiUrlConfirm,
-        onDismiss = onSponsorBlockApiUrlEditorDismiss,
-    )
 
     Scaffold(
         topBar = {
@@ -321,31 +207,6 @@ fun PlayerSettings(navController: NavController) {
                 .padding(bottom = SettingsDimensions.ScreenBottomPadding),
         ) {
             PreferenceGroup(title = stringResource(R.string.player)) {
-                item {
-                    EnumListPreference(
-                        title = { Text(stringResource(R.string.modules_youtube_quality)) },
-                        description = stringResource(R.string.modules_youtube_quality_description),
-                        icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
-                        selectedValue = audioQuality,
-                        onValueSelected = onAudioQualityChange,
-                        valueText = {
-                            when (it) {
-                                AudioQuality.HIGHEST -> stringResource(R.string.audio_quality_max)
-                                AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
-                                AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
-                                AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-                            }
-                        },
-                    )
-                }
-
-                playbackPerformancePreferences(
-                    state = playbackPerformanceSettingsState,
-                    onLowDataModeChange = onLowDataModeChange,
-                    onPreloadNextSongChange = onPreloadNextSongChange,
-                    onRetry = onPlaybackPerformanceRetry,
-                )
-
                 item {
                     SliderPreference(
                         title = { Text(stringResource(R.string.history_duration)) },
@@ -480,19 +341,6 @@ fun PlayerSettings(navController: NavController) {
                 }
             }
 
-            PreferenceGroup(title = stringResource(R.string.sponsor_block_group)) {
-                sponsorBlockPreferences(
-                    state = sponsorBlockSettingsState,
-                    onEnabledChange = onSponsorBlockEnabledChange,
-                    onCategorySheetOpen = onSponsorBlockCategorySheetOpen,
-                    onCategorySheetDismiss = onSponsorBlockCategorySheetDismiss,
-                    onCategoryCheckedChange = onSponsorBlockCategoryCheckedChange,
-                    onCategorySelectionConfirm = onSponsorBlockCategorySelectionConfirm,
-                    onApiUrlEditorOpen = onSponsorBlockApiUrlEditorOpen,
-                    onRetry = onSponsorBlockRetry,
-                )
-            }
-
             PreferenceGroup(title = stringResource(R.string.queue)) {
                 item {
                     SwitchPreference(
@@ -511,16 +359,6 @@ fun PlayerSettings(navController: NavController) {
                         icon = { Icon(painterResource(R.drawable.shuffle), null) },
                         checked = permanentShuffle,
                         onCheckedChange = onPermanentShuffleChange,
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.auto_download_on_like)) },
-                        description = stringResource(R.string.auto_download_on_like_desc),
-                        icon = { Icon(painterResource(R.drawable.download), null) },
-                        checked = autoDownloadOnLike,
-                        onCheckedChange = onAutoDownloadOnLikeChange,
                     )
                 }
 
@@ -563,188 +401,8 @@ fun PlayerSettings(navController: NavController) {
                         onClick = { showArtistSeparatorsDialog = true },
                     )
                 }
-
-                item {
-                    SwitchPreference(
-                        title = { Text(stringResource(R.string.external_downloader)) },
-                        description = stringResource(R.string.external_downloader_desc),
-                        icon = { Icon(painterResource(R.drawable.download), null) },
-                        checked = externalDownloaderEnabled,
-                        onCheckedChange = onExternalDownloaderEnabledChange,
-                    )
-                }
-
-                item {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.external_downloader_package)) },
-                        description = externalDownloaderPackage.ifEmpty { stringResource(R.string.external_downloader_package_desc) },
-                        icon = { Icon(painterResource(R.drawable.integration), null) },
-                        onClick = { showExternalDownloaderPackageDialog = true },
-                        isEnabled = externalDownloaderEnabled,
-                    )
-                }
             }
         }
     }
 }
 
-@Composable
-private fun SponsorBlockApiUrlDialog(
-    state: SponsorBlockSettingsScreenState,
-    onValueChange: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val data = (state as? SponsorBlockSettingsScreenState.Success)?.data ?: return
-    if (!data.isApiUrlEditorVisible) return
-    val isInputValid =
-        remember(data.isApiUrlDraftValid) {
-            { _: String -> data.isApiUrlDraftValid }
-        }
-    val confirmValue =
-        remember(onConfirm) {
-            { _: String -> onConfirm() }
-        }
-
-    TextFieldDialog(
-        title = { Text(stringResource(R.string.sponsor_block_api_url)) },
-        textFieldValue = data.apiUrlDraft,
-        onTextFieldValueChange = onValueChange,
-        keyboardOptions =
-            KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Done,
-            ),
-        isInputValid = isInputValid,
-        dismissOnDone = false,
-        onDone = confirmValue,
-        onDismiss = onDismiss,
-    )
-}
-
-private fun PreferenceGroupScope.sponsorBlockPreferences(
-    state: SponsorBlockSettingsScreenState,
-    onEnabledChange: (Boolean) -> Unit,
-    onCategorySheetOpen: () -> Unit,
-    onCategorySheetDismiss: () -> Unit,
-    onCategoryCheckedChange: (SponsorBlockCategoryUiModel, Boolean) -> Unit,
-    onCategorySelectionConfirm: () -> Unit,
-    onApiUrlEditorOpen: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    val data = (state as? SponsorBlockSettingsScreenState.Success)?.data
-    val controlsEnabled = data != null
-    val configurationEnabled = controlsEnabled && data?.enabled == true
-    val categoryOptions = data?.categoryOptions ?: EMPTY_SPONSOR_BLOCK_CATEGORY_OPTIONS
-    val draftCategoryOptions = data?.draftCategoryOptions ?: EMPTY_SPONSOR_BLOCK_CATEGORY_OPTIONS
-
-    item {
-        SwitchPreference(
-            title = { Text(stringResource(R.string.sponsor_block_use)) },
-            icon = { Icon(painterResource(R.drawable.block), null) },
-            checked = data?.enabled ?: false,
-            onCheckedChange = onEnabledChange,
-            isEnabled = controlsEnabled,
-        )
-    }
-
-    item {
-        val selectedCount = data?.selectedCategoryOptions?.size ?: 0
-        MultiSelectListPreference(
-            title = { Text(stringResource(R.string.sponsor_block_categories)) },
-            description = stringResource(R.string.sponsor_block_categories_desc),
-            icon = { Icon(painterResource(R.drawable.fast_forward), null) },
-            values = categoryOptions,
-            checkedValues = draftCategoryOptions,
-            selectionText =
-                androidx.compose.ui.res.pluralStringResource(
-                    R.plurals.n_selected,
-                    selectedCount,
-                    selectedCount,
-                ),
-            valueText = { option -> stringResource(option.labelRes) },
-            isBottomSheetVisible = data?.isCategorySheetVisible == true,
-            onOpen = onCategorySheetOpen,
-            onDismiss = onCategorySheetDismiss,
-            onValueCheckedChange = onCategoryCheckedChange,
-            onConfirm = onCategorySelectionConfirm,
-            isEnabled = configurationEnabled,
-        )
-    }
-
-    item {
-        PreferenceEntry(
-            title = { Text(stringResource(R.string.sponsor_block_api_url)) },
-            description = data?.apiUrl ?: DEFAULT_SPONSOR_BLOCK_API_URL,
-            icon = { Icon(painterResource(R.drawable.link), null) },
-            onClick = onApiUrlEditorOpen,
-            isEnabled = configurationEnabled,
-        )
-    }
-
-    if (state is SponsorBlockSettingsScreenState.Error) {
-        item {
-            PreferenceEntry(
-                title = { Text(stringResource(R.string.retry)) },
-                description = stringResource(state.messageRes),
-                onClick = onRetry,
-            )
-        }
-    }
-}
-
-private val EMPTY_SPONSOR_BLOCK_CATEGORY_OPTIONS: ImmutableList<SponsorBlockCategoryUiModel> =
-    ImmutableList.of()
-
-private fun PreferenceGroupScope.playbackPerformancePreferences(
-    state: PlaybackPerformanceSettingsUiState,
-    onLowDataModeChange: (Boolean) -> Unit,
-    onPreloadNextSongChange: (Boolean) -> Unit,
-    onRetry: () -> Unit,
-) {
-    val data = (state as? PlaybackPerformanceSettingsUiState.Success)?.data
-
-    val lowDataModeEnabled = data?.lowDataModeEnabled ?: false
-    val preloadNextSongEnabled = data?.preloadNextSongEnabled ?: false
-    val lowDataModeControlEnabled =
-        when (state) {
-            PlaybackPerformanceSettingsUiState.Loading,
-            is PlaybackPerformanceSettingsUiState.Error -> false
-            PlaybackPerformanceSettingsUiState.Empty,
-            is PlaybackPerformanceSettingsUiState.Success -> true
-        }
-    val preloadNextSongControlEnabled =
-        lowDataModeControlEnabled && (data?.preloadNextSongAvailable ?: true)
-
-    item {
-        SwitchPreference(
-            title = { Text(stringResource(R.string.low_data_mode_title)) },
-            description = stringResource(R.string.low_data_mode_description),
-            icon = { Icon(painterResource(R.drawable.android_cell), null) },
-            checked = lowDataModeEnabled,
-            onCheckedChange = onLowDataModeChange,
-            isEnabled = lowDataModeControlEnabled,
-        )
-    }
-
-    item {
-        SwitchPreference(
-            title = { Text(stringResource(R.string.preload_next_song_title)) },
-            description = stringResource(R.string.preload_next_song_warning),
-            icon = { Icon(painterResource(R.drawable.error), null) },
-            checked = preloadNextSongEnabled,
-            onCheckedChange = onPreloadNextSongChange,
-            isEnabled = preloadNextSongControlEnabled,
-        )
-    }
-
-    if (state is PlaybackPerformanceSettingsUiState.Error) {
-        item {
-            PreferenceEntry(
-                title = { Text(stringResource(R.string.retry)) },
-                description = stringResource(R.string.error_unknown),
-                onClick = onRetry,
-            )
-        }
-    }
-}

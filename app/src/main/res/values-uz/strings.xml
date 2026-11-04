@@ -17,7 +17,6 @@
     <string name="speed_dial">Tez terish</string>
     <string name="forgotten_favorites">Unutilgan sevimlilar</string>
     <string name="keep_listening">Tinglashda davom eting</string>
-    <string name="your_youtube_playlists">YouTube pleylistlaringiz</string>
     <string name="similar_to">Shunga o\'xshash</string>
     <string name="new_release_albums">Yangi chiqarilgan albomlar</string>
     <string name="integration">Integratsiya</string>
@@ -27,7 +26,6 @@
     <string name="last_week">O\'tkan hafta</string>
     <string name="most_played_songs">Eng ko\'p ijro etilgan qo\'shiqlar</string>
     <string name="search">Qidiruv</string>
-    <string name="search_yt_music">YouTube Music’ni qidirish</string>
     <string name="search_library">Kutubxonani qidirish</string>
     <string name="filter_library">Kutubxona</string>
     <string name="filter_liked">Yoqdi</string>

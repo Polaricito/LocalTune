@@ -17,7 +17,6 @@
     <string name="speed_dial">شماره گیری سریع</string>
     <string name="forgotten_favorites">محبوب های فراموش شده</string>
     <string name="keep_listening">ادامه گوش دادن</string>
-    <string name="your_youtube_playlists">پلی لیست‌های یوتیوب شما</string>
     <string name="similar_to">شبیه به</string>
     <string name="new_release_albums">آلبومهای تازه منتشرشده</string>
     <string name="integration">ادغام</string>
@@ -27,7 +26,6 @@
     <string name="last_week">هفته قبل</string>
     <string name="most_played_songs">ترانه‌های بیشتر پخش شده</string>
     <string name="search">جستجو</string>
-    <string name="search_yt_music">جستجوی YouTube Music</string>
     <string name="search_library">جستجو کتابخانه</string>
     <string name="filter_library">کتابخانه</string>
     <string name="filter_liked">پسندیده‌ها</string>

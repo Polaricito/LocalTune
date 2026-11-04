@@ -20,8 +20,6 @@
     <string name="my_top">Meine Top</string>
     <string name="cached_playlist">Im Cache</string>
     <string name="sync_playlist">Playlist synchronisieren</string>
-    <string name="sync_disabled">Synchronisierung deaktiviert</string>
-    <string name="allows_for_sync_witch_youtube">Hinweis: Dies ermöglicht die Synchronisierung mit YouTube Music. Dies ist später NICHT änderbar.</string>
     <string name="generating_image">Bild erzeugen</string>
     <string name="please_wait">Bitte warten</string>
     <string name="cancel">Abbrechen</string>
@@ -107,7 +105,6 @@
     <string name="clear_image_cache_dialog">Sind Sie sicher, dass Sie alle zwischengespeicherten Bilder löschen möchten?</string>
     <string name="clear_downloads_dialog">Bist du sicher, dass du alle Downloads löschen möchtest?</string>
     <string name="disable">Deaktivieren</string>
-    <string name="not_logged_in_youtube">Nicht bei YouTube angemeldet</string>
     <string name="default_links">Unterstützte Links öffnen</string>
     <string name="open_app_settings_error">Die App-Einstellungen konnten nicht geöffnet werden</string>
     <string name="release_notes">Versionshinweise</string>
@@ -590,7 +587,6 @@
     <string name="unblock_artist">Blockierung des Künstlers aufheben</string>
     <string name="music_recognition_background_foss_description">Erkennung im Hintergrund ist in der FOSS-Variante nicht verfügbar. Stattdessen öffnet die Schnelleinstellungskachel den Erkennungsbildschirm.</string>
     <string name="use_system_language">Systemsprache verwenden</string>
-    <string name="import_source_youtube">YouTube Music</string>
     <string name="import_source_unresolved">Nicht gefunden</string>
     <string name="import_review_skipped">%1$d übersprungen</string>
     <string name="import_skip_song">Überspringen</string>

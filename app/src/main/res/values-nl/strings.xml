@@ -17,7 +17,6 @@
     <string name="speed_dial">Sneltoets</string>
     <string name="forgotten_favorites">Vergeten favorieten</string>
     <string name="keep_listening">Blijf luisteren</string>
-    <string name="your_youtube_playlists">Jouw YouTube-afspeellijst</string>
     <string name="similar_to">Vergelijkbaar met</string>
     <string name="new_release_albums">Nieuwe albums</string>
     <string name="integration">Integratie</string>
@@ -27,7 +26,6 @@
     <string name="last_week">Vorige week</string>
     <string name="most_played_songs">Meest beluisterde nummers</string>
     <string name="search">Zoeken</string>
-    <string name="search_yt_music">Zoeken op YouTube Music</string>
     <string name="search_library">Zoek in bibliotheek</string>
     <string name="filter_library">Bibliotheek</string>
     <string name="filter_liked">Leuk gevonden</string>
@@ -86,7 +84,6 @@
     <string name="list_view">Lijstweergave</string>
     <string name="grid_view">Rasterweergave</string>
     <string name="personal_label">Persoonlijk</string>
-    <string name="youtube_synced">YouTube gesynchroniseerd</string>
     <string name="options_label">Opties</string>
     <string name="top_artist_badge">TOPARTIESTEN</string>
     <string name="no_artist_yet">Nog geen artiest</string>

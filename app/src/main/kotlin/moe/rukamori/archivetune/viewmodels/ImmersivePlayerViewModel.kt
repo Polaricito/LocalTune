@@ -15,12 +15,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.canvas.CanvasVideo
 import moe.rukamori.archivetune.domain.player.ObserveImmersivePlayerUseCase
 import moe.rukamori.archivetune.playback.ImmersivePlayerData
 import moe.rukamori.archivetune.playback.ImmersivePlayerRepository
@@ -44,46 +41,17 @@ class ImmersivePlayerViewModel @Inject constructor(
     val events = eventChannel.receiveAsFlow()
 
     private var latestData: ImmersivePlayerData? = null
-    private var latestCanvas: ResolvedCanvas? = null
 
     init {
         viewModelScope.launch {
             observePlayer().collectLatest { data ->
                 latestData = data
                 if (data == null) {
-                    latestCanvas = null
                     mutableState.value = ImmersivePlayerScreenState.Empty
                 } else {
                     publish(data)
                 }
             }
-        }
-        viewModelScope.launch {
-            combine(
-                observePlayer().distinctUntilChangedBy { it?.metadata?.id },
-                observePlayer.canvasPolicy,
-                observePlayer.canvasRevision,
-                observePlayer.spotifyConnected,
-            ) { data, policy, _, _ -> data to policy }
-                .collectLatest { (data, policy) ->
-                    if (data == null || !policy.ready || !policy.configuration.enabled) {
-                        latestCanvas = null
-                        data?.let(::publish)
-                        return@collectLatest
-                    }
-                    try {
-                        latestCanvas =
-                            observePlayer
-                                .loadCanvas(observePlayer.requestFor(data), policy)
-                                ?.let { canvas -> ResolvedCanvas(data.metadata.id, canvas) }
-                    } catch (error: CancellationException) {
-                        throw error
-                    } catch (error: Exception) {
-                        latestCanvas = null
-                        Timber.w(error, "Immersive player canvas resolution failed")
-                    }
-                    latestData?.takeIf { it.metadata.id == data.metadata.id }?.let(::publish)
-                }
         }
         viewModelScope.launch {
             repository.observeProgress().collect { progress ->
@@ -120,13 +88,7 @@ class ImmersivePlayerViewModel @Inject constructor(
 
     fun onAction(action: ImmersivePlayerAction) {
         when (action) {
-            is ImmersivePlayerAction.CanvasFrameCaptured -> updateModel {
-                if (it.mediaId == action.mediaId && it.canvas == action.canvas) {
-                    it.copy(canvasFrame = action.frame)
-                } else {
-                    it
-                }
-            }
+            is ImmersivePlayerAction.CanvasFrameCaptured -> Unit
             ImmersivePlayerAction.TogglePlayPause -> repository.togglePlayPause()
             ImmersivePlayerAction.SkipPrevious -> repository.skipPrevious()
             ImmersivePlayerAction.SkipNext -> repository.skipNext()
@@ -162,8 +124,7 @@ class ImmersivePlayerViewModel @Inject constructor(
 
     private fun publish(data: ImmersivePlayerData) {
         val old = currentModel()
-        val canvas = latestCanvas?.takeIf { it.mediaId == data.metadata.id }?.video
-        val mapped = observePlayer.map(data, canvas)
+        val mapped = observePlayer.map(data)
         val model =
             if (old?.mediaId == mapped.mediaId) {
                 mapped.copy(
@@ -172,7 +133,7 @@ class ImmersivePlayerViewModel @Inject constructor(
                     volume = old.volume,
                     seekPositionMs = old.seekPositionMs,
                     showArtistDialog = old.showArtistDialog && old.artists == mapped.artists,
-                    canvasFrame = old.canvasFrame.takeIf { old.canvas == mapped.canvas },
+                    canvasFrame = old.canvasFrame,
                 )
             } else {
                 mapped
@@ -199,9 +160,4 @@ class ImmersivePlayerViewModel @Inject constructor(
             else -> Unit
         }
     }
-
-    private data class ResolvedCanvas(
-        val mediaId: String,
-        val video: CanvasVideo,
-    )
 }

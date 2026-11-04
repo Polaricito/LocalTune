@@ -10,7 +10,6 @@
     <string name="account">Fiók</string>
     <string name="quick_picks">Gyors ajánlatunk</string>
     <string name="forgotten_favorites">Elfelejtett kedvencek</string>
-    <string name="your_youtube_playlists">Lejátszási listáid</string>
     <string name="similar_to">Hasonló lehet ehez</string>
     <string name="new_release_albums">Új kiadású albumok</string>
     <string name="today">Ma</string>
@@ -19,7 +18,6 @@
     <string name="last_week">Elöző hét(en)</string>
     <string name="most_played_songs">Legtöbbet lejátszott számok</string>
     <string name="search">Keresés</string>
-    <string name="search_yt_music">Keresés YouTube Music-on</string>
     <string name="filter_downloaded">Letöltve</string>
     <string name="filter_all">Összes</string>
     <string name="filter_songs">Zeneszámok</string>
@@ -70,6 +68,5 @@
     <string name="list_view">Lista nézet</string>
     <string name="grid_view">Rács nézet</string>
     <string name="personal_label">Személyes(saját)</string>
-    <string name="youtube_synced">Youtube szinkronizáció</string>
     <string name="options_label">Lehetőségek</string>
 </resources>

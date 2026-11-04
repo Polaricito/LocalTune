@@ -20,14 +20,4 @@
             android:targetClass="moe.rukamori.archivetune.MainActivity"
             android:targetPackage="moe.rukamori.archivetune" />
     </shortcut>
-    <shortcut
-        android:enabled="true"
-        android:icon="@drawable/shortcut_music_recognition"
-        android:shortcutId="music_recognition"
-        android:shortcutShortLabel="@string/music_recognition">
-        <intent
-            android:action="moe.rukamori.archivetune.action.MUSIC_RECOGNITION"
-            android:targetClass="moe.rukamori.archivetune.MainActivity"
-            android:targetPackage="moe.rukamori.archivetune" />
-    </shortcut>
 </shortcuts>

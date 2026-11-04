@@ -1,106 +1,140 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# 🛠️ CONTRIBUTE TO ARCHIVETUNE
-=======
-# 🛠️ CONTRIBUTE TO ARCHIVETUNE
->>>>>>> 2f5ffcfb9 (docs: update title)
+# 🛠️ Contribute to ArchiveTune
 
-This document defines the protocols for setting up the development environment, understanding the underlying technology stack, and compiling **ArchiveTune** from the source.
+This document explains how to set up the development environment, understand
+the project structure and build **ArchiveTune** from source.
 
-
----
-
-## 🏗️ Operational Readiness
-
-To ensure build stability and environment parity, the following hardware and software configurations are mandatory.
-
-### **Development Environment**
-
-* **IDE:** [Android Studio](https://developer.android.com/studio) **Ladybug (2024.2.1) or newer**.
-* **Java Runtime:** **JDK 17** (Amazon Corretto or Azul Zulu recommended for deterministic builds).
-* **Android SDK:** API Level 34+ (Upside Down Cake).
-* **Version Control:** Git 2.40+.
-
-### **Technical DNA (Skill Requirements)**
-
-The ArchiveTune codebase is built on a modern, reactive architecture. Contributors are expected to have a high level of familiarity with:
-
-* **Kotlin (Advanced):** Proficiency in Coroutines, Flow API, and functional paradigms.
-* **Jetpack Compose:** Understanding of State Hoisting, Recomposition optimization, and Material 3 design systems.
-* **Gradle (KTS):** Ability to navigate Kotlin DSL build scripts and Version Catalogs (`libs.versions.toml`).
-* **Modern Android Architecture:** Deep understanding of MVVM, Repository patterns, and UDF (Unidirectional Data Flow).
+ArchiveTune is a fully local Android music player. Contributions must keep it
+offline: no network calls, no online accounts, no remote catalogs and no
+internet permission.
 
 ---
 
-## 📐 Architectural Manifesto
+## Development environment
 
-ArchiveTune follows a strict **Clean Architecture** approach. This separation of concerns ensures that the audio engine remains independent of the UI layer.
+- **IDE:** Android Studio Ladybug (2024.2.1) or newer.
+- **JDK:** 21.
+- **Android SDK:** compile SDK 37.
+- **Android NDK:** `30.0.16248370`.
+- **CMake:** `3.22.1`.
+- **Git:** 2.40 or newer.
 
-1. **UI Layer (Compose):** Handles user interactions and renders state emitted by ViewModels.
-2. **Domain Layer:** Contains business logic, Use Cases, and high-level audio processing interfaces.
-3. **Data Layer:** Manages the single source of truth—coordinating between the YouTube Music API (Retrofit) and the local encrypted cache (Room).
-4. **Service Layer (Media3):** A specialized background layer managing the `MediaSession` and low-latency audio pipelines.
+The NDK and CMake are required because lyrics transcription uses a native
+whisper.cpp build.
 
----
+## Skills
 
-## 🚀 Environment Initialization
+The codebase uses:
 
-1. **Clone the Source:**
-```bash
-git clone https://github.com/rukamori/ArchiveTune.git
-cd ArchiveTune
+- Kotlin with Coroutines and Flow.
+- Jetpack Compose and Material 3.
+- Gradle Kotlin DSL and version catalogs (`gradle/libs.versions.toml`).
+- MVVM, repositories and unidirectional data flow.
 
-```
+## Architecture
 
+1. **UI layer (Compose):** renders state emitted by ViewModels and forwards
+   user actions.
+2. **Domain layer:** use cases and playback abstractions.
+3. **Data layer:** Room database, MediaStore scanning and local file access.
+4. **Service layer (Media3):** `MediaSessionService` for background playback.
+5. **Native layer:** CMake/JNI wrapper around whisper.cpp for offline lyrics.
 
-2. **Secret Management:**
-ArchiveTune uses a modular properties system. If your build requires specific API keys (e.g., Discord Client IDs), define them in your `local.properties`:
+There is no network layer. Do not add one.
+
+## Getting started
+
+1. Clone the repository and open it in Android Studio.
+2. Create `local.properties` with your SDK path:
+
 ```properties
-# Path to your Android SDK
-sdk.dir=/Users/yourname/Library/Android/sdk
-
+sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk
 ```
 
+3. Let Gradle sync. Version catalogs pin the tested dependency versions.
+4. Build a debug APK:
 
-3. **Syncing the Core:**
-Open the project in Android Studio. The IDE will automatically trigger a Gradle sync. We use **Version Catalogs** to ensure all dependencies (Media3, Hilt, Compose) are locked to tested versions.
+```bash
+./gradlew :app:assembleGmsMobileUniversalDebug
+```
 
----
+The first native build compiles whisper.cpp for all four ABIs and can take a
+few minutes.
 
-## 📦 Build Pipelines
-
-Use the Gradle Wrapper to execute verified build scripts.
+## Build commands
 
 | Command | Output | Context |
 | --- | --- | --- |
-| `./gradlew assembleDebug` | `app-debug.apk` | Local testing & feature development. |
-| `./gradlew assembleRelease` | `app-release.apk` | Production-ready, R8-optimized build. |
-| `./gradlew bundleRelease` | `app-release.aab` | Optimized bundle for distribution. |
-| `./gradlew clean` | `N/A` | Flushes build cache to resolve sync issues. |
+| `./gradlew :app:assembleGmsMobileUniversalDebug` | Debug APK, all ABIs | Local testing |
+| `./gradlew :app:assembleGmsMobileUniversalRelease` | Signed release APK | Release testing |
+| `./gradlew :app:compileGmsMobileUniversalDebugKotlin` | Kotlin compilation only | Fast checks |
+| `./gradlew :app:externalNativeBuildGmsMobileUniversalDebug` | Native libraries only | whisper.cpp changes |
+| `./gradlew test` | Unit tests | Logic verification |
+| `./gradlew clean` | – | Clear build outputs |
 
----
+Per-ABI variants (`arm64`, `armeabi`, `x86`, `x86_64`) are also available.
 
-## 🛡️ Code Quality & Static Analysis
+## Signing
 
-Before initiating a Pull Request, every contributor must run the following quality gates:
+Release and nightly builds use the committed self-signed key
+`app/keystore/release.keystore`:
 
-* **Linting:** `./gradlew lintDebug` (Ensures adherence to Android XML/Compose standards).
-* **Formatting:** `./gradlew ktlintCheck` (Ensures consistent Kotlin styling).
-* **Logic Verification:** `./gradlew testDebugUnitTest` (Runs the architectural unit tests).
+- alias: `archivetune`
+- key password: `archivetune`
+- store password: `archivetune`
 
----
+The key is intentionally public. Do not replace it: changing the key breaks
+updates for existing installations.
 
-## ⚖️ Troubleshooting
+## Code quality
+
+Before opening a pull request, run:
+
+```bash
+./gradlew :app:compileGmsMobileUniversalDebugKotlin
+./gradlew test
+./gradlew lintDebug
+```
+
+## Native code
+
+- `app/src/main/cpp/CMakeLists.txt` builds whisper.cpp, ggml and the JNI bridge.
+- `app/src/main/cpp/whisper_jni.cpp` exposes `nativeInit`,
+  `nativeRelease` and `nativeTranscribe`.
+- `app/src/main/cpp/whisper.cpp/` contains the vendored MIT-licensed sources.
+- If you update whisper.cpp, update the version in `CMakeLists.txt` and keep
+  the license files.
+
+## Lyrics
+
+- Embedded tags are imported during the MediaStore scan.
+- `.lrc` sidecars are read and written by `LocalLyricsRepository`.
+- On-device transcription lives in `lyrics/WhisperEngine.kt`,
+  `lyrics/AudioPcmDecoder.kt` and `lyrics/LocalLyricsTranscriber.kt`.
+- Batch processing is exposed in Settings → Local lyrics.
+
+## Translations
+
+User-facing strings belong in `app/src/main/res/values/strings.xml`. Translated
+resources live in the `values-*` directories. Keep the base strings in English
+and preserve existing formatting placeholders.
+
+## Troubleshooting
 
 > [!IMPORTANT]
-> **Heap Memory:** If you experience `GC overhead limit exceeded`, ensure your `gradle.properties` has sufficient memory allocated:
+> **Heap memory:** if Gradle reports `GC overhead limit exceeded`, raise the
+> limits in `gradle.properties`:
 > `org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g`
 
 > [!WARNING]
-> **Compose Compiler:** If the build fails due to a Compose version mismatch, verify that the `kotlinCompilerExtensionVersion` in the build script matches the current Kotlin version.
+> **Native build failures:** confirm that NDK `30.0.16248370` and CMake
+> `3.22.1` are installed in the Android SDK, then delete `app/.cxx` and rebuild.
+
+> [!WARNING]
+> **Compose compiler:** a Compose version mismatch usually means the Kotlin
+> plugin and Compose compiler versions in the version catalog do not match.
 
 ---
 
 <div align="center">
-<sub>ArchiveTune: Engineering audio freedom. Part of the <strong>Koiverse</strong> ecosystem.</sub>
+<sub>ArchiveTune: your music, entirely on your device.</sub>
 </div>

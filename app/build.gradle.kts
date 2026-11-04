@@ -25,38 +25,13 @@ fun String.asBuildConfigString(): String =
             .replace("\t", "\\t")
     }\""
 
-val fallbackDataServerUrl = "archive-tune-admin-remote.vercel.app"
-val dataServerUrl =
-    rootProject
-        .file("DataServer.txt")
-        .takeIf { it.isFile }
-        ?.readText()
-        ?.trim()
-        ?.takeIf { it.startsWith("https://") || it.startsWith("http://") }
-        ?: fallbackDataServerUrl
-val apiBearerToken = System.getenv("API_BEARER_TOKEN")?.trim()
-    ?: localProperties.getProperty("API_BEARER_TOKEN")?.trim()
-    ?: ""
-
-val discordApplicationId =
-    (
-        localProperties.getProperty("DISCORD_APPLICATION_ID")
-            ?: System.getenv("DISCORD_APPLICATION_ID")
-            ?: "1165706613961789445"
-        ).trim()
-val discordApplicationIdLong = discordApplicationId.toLongOrNull() ?: 1165706613961789445L
-val discordRedirectScheme = "discord-$discordApplicationId"
 val releaseKeystoreFile = file("keystore/release.keystore")
-val releaseStorePassword =
-    System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-val releaseKeyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
-val releaseKeyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-val hasReleaseSigningConfig =
-    releaseKeystoreFile.isFile &&
-        releaseStorePassword != null &&
-        releaseKeyAlias != null &&
-        releaseKeyPassword != null
+// Stable self-signed key committed to the repository so every build keeps the
+// same signature and existing installations can be updated in place.
+val releaseStorePassword = "archivetune"
+val releaseKeyAlias = "archivetune"
+val releaseKeyPassword = "archivetune"
+val hasReleaseSigningConfig = releaseKeystoreFile.isFile
 android {
     namespace = "moe.rukamori.archivetune"
     compileSdk = 37
@@ -73,28 +48,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        val lastfmApiKey =
-            localProperties.getProperty("LASTFM_API_KEY")
-                ?: System.getenv("LASTFM_API_KEY")
-                ?: ""
-        val lastfmSecret =
-            localProperties.getProperty("LASTFM_SECRET")
-                ?: System.getenv("LASTFM_SECRET")
-                ?: ""
-        buildConfigField("String", "LASTFM_API_KEY", "\"$lastfmApiKey\"")
-        buildConfigField("String", "LASTFM_SECRET", "\"$lastfmSecret\"")
-
-        val togetherBearerToken =
-            localProperties.getProperty("TOGETHER_BEARER_TOKEN")
-                ?: System.getenv("TOGETHER_BEARER_TOKEN")
-                ?: ""
-        buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
-
-        buildConfigField("String", "DATA_SERVER_URL", dataServerUrl.asBuildConfigString())
-        buildConfigField("String", "API_BEARER_TOKEN", apiBearerToken.asBuildConfigString())
-        buildConfigField("boolean", "GATEKEEPER_ENABLED", "false")
-        buildConfigField("boolean", "LEAK_CANARY_TOGGLE_AVAILABLE", "false")
-
         val nightlyBuildHash =
             (
                 localProperties.getProperty("NIGHTLY_BUILD_HASH")
@@ -109,29 +62,6 @@ android {
             versionName = nightlyVersionName
         }
         buildConfigField("String", "DISTRIBUTION", "\"gms\"")
-        buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
-
-        val githubOwner =
-            System.getenv("GITHUB_OWNER")?.trim()
-                ?: localProperties.getProperty("GITHUB_OWNER")?.trim()
-                ?: "rukamori"
-        val githubRepo =
-            System.getenv("GITHUB_REPO")?.trim()
-                ?: localProperties.getProperty("GITHUB_REPO")?.trim()
-                ?: "ArchiveTune"
-        buildConfigField("String", "GITHUB_OWNER", githubOwner.asBuildConfigString())
-        buildConfigField("String", "GITHUB_REPO", githubRepo.asBuildConfigString())
-
-        val releaseGithubOwner =
-            System.getenv("RELEASE_GITHUB_OWNER")?.trim()
-                ?: localProperties.getProperty("RELEASE_GITHUB_OWNER")?.trim()
-                ?: githubOwner
-        val releaseGithubRepo =
-            System.getenv("RELEASE_GITHUB_REPO")?.trim()
-                ?: localProperties.getProperty("RELEASE_GITHUB_REPO")?.trim()
-                ?: githubRepo
-        buildConfigField("String", "RELEASE_GITHUB_OWNER", releaseGithubOwner.asBuildConfigString())
-        buildConfigField("String", "RELEASE_GITHUB_REPO", releaseGithubRepo.asBuildConfigString())
     }
 
     flavorDimensions += listOf("distribution", "device", "abi")
@@ -140,20 +70,10 @@ android {
             dimension = "distribution"
             isDefault = true
             buildConfigField("String", "DISTRIBUTION", "\"gms\"")
-            buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
-            buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
-            buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
-            buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
-            manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
         }
         create("foss") {
             dimension = "distribution"
             buildConfigField("String", "DISTRIBUTION", "\"foss\"")
-            buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
-            buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
-            buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
-            buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
-            manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
         }
         create("mobile") {
             dimension = "device"
@@ -226,6 +146,9 @@ android {
             isDebuggable = true
         }
         create("nightly") {
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             applicationIdSuffix = ".nightly"
             isDebuggable = false
             isMinifyEnabled = true
@@ -263,6 +186,13 @@ android {
         checkDependencies = false
     }
 
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
     androidResources {
         generateLocaleConfig = true
     }
@@ -297,6 +227,7 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.activity)
     implementation(libs.navigation)
@@ -330,18 +261,8 @@ dependencies {
     implementation(libs.palette)
     implementation(libs.androidsvg)
     implementation(libs.aboutlibraries.core)
-    implementation(libs.markwon.core)
-    implementation(libs.markwon.ext.strikethrough)
-    implementation(libs.markwon.ext.tables)
-    implementation(libs.markwon.ext.tasklist)
-    implementation(libs.markwon.html)
-    implementation(libs.markwon.image)
-    implementation(libs.markwon.linkify)
-    implementation(libs.markwon.simple.ext)
-
     implementation(libs.coil)
     implementation(libs.coil.gif)
-    implementation(libs.coil.network.okhttp)
 
     implementation(libs.shimmer)
 
@@ -351,16 +272,9 @@ dependencies {
     implementation("androidx.glance:glance-material3:1.2.0")
 
     implementation(libs.media3)
-    implementation("androidx.media3:media3-exoplayer-hls:${libs.versions.media3.get()}")
     implementation(libs.media3.session)
-    implementation(libs.car.app)
-    implementation(libs.media3.okhttp)
     implementation("androidx.media3:media3-ui:${libs.versions.media3.get()}")
     implementation("androidx.media3:media3-ui-compose:${libs.versions.media3.get()}")
-    add("gmsImplementation", libs.media3.cast)
-    add("gmsImplementation", libs.mediarouter)
-    add("gmsImplementation", "com.google.android.gms:play-services-auth:22.0.0")
-
 
     implementation(libs.room.runtime)
     implementation(libs.kuromoji.ipadic)
@@ -375,84 +289,15 @@ dependencies {
     ksp(libs.hilt.compiler)
     ksp(libs.kotlin.metadata.jvm)
 
-    implementation(project(":core"))
-    implementation(project(":lyrics:kugou"))
-    implementation(project(":lyrics:lrclib"))
-    implementation(project(":lyrics:simpmusic"))
-    implementation(project(":lyrics:paxsenix"))
-    implementation(project(":lyrics:betterlyrics"))
-    implementation(project(":lyrics:unison"))
-    implementation(project(":lyrics:youlyplus"))
-    implementation(project(":lastfm"))
-    implementation(project(":canvas"))
-    implementation(project(":shazamkit"))
-    implementation(project(":spotifycore"))
-    implementation(project(":morideobfuscator"))
-    implementation(project(":modules"))
-    implementation("androidx.media3:media3-exoplayer-dash:${libs.versions.media3.get()}")
     implementation("com.materialkolor:material-kolor:5.0.1")
-
-    implementation(libs.webkit)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.serialization.json)
-    implementation(libs.ktor.client.websockets)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
-    implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.server.content.negotiation)
 
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.timber)
     testImplementation(libs.junit)
     testImplementation(libs.turbine)
-    implementation(libs.translator)
     implementation("androidx.lifecycle:lifecycle-process:2.11.0")
     implementation("androidx.compose.material3.adaptive:adaptive:1.4.0-alpha03")
-    implementation(libs.accompanist.lyrics.ui)
-    implementation(libs.accompanist.lyrics.core)
-}
-
-androidComponents {
-    onVariants(selector().all()) { variant ->
-        if (variant.productFlavors.any { (_, flavor) -> flavor == "automotive" }) return@onVariants
-        val capitalizedVariantName =
-            variant.name.replaceFirstChar { character ->
-                if (character.isLowerCase()) character.titlecase() else character.toString()
-            }
-        val generateIconPack =
-            tasks.register<GenerateIconPackTask>("generate${capitalizedVariantName}IconPack") {
-                metadataFile.set(rootProject.layout.projectDirectory.file("IconPack/metadata.json"))
-                svgDirectory.set(rootProject.layout.projectDirectory.dir("IconPack/svg"))
-                applicationId.set(variant.applicationId)
-                targetActivityClassName.set("moe.rukamori.archivetune.MainActivity")
-                resourceOutputDirectory.set(
-                    layout.buildDirectory.dir("generated/iconPack/${variant.name}/res"),
-                )
-                assetOutputDirectory.set(
-                    layout.buildDirectory.dir("generated/iconPack/${variant.name}/assets"),
-                )
-                manifestOutputFile.set(
-                    layout.buildDirectory.file(
-                        "generated/iconPack/${variant.name}/AndroidManifest.xml",
-                    ),
-                )
-            }
-
-        variant.sources.res?.addGeneratedSourceDirectory(
-            generateIconPack,
-            GenerateIconPackTask::resourceOutputDirectory,
-        )
-        variant.sources.assets?.addGeneratedSourceDirectory(
-            generateIconPack,
-            GenerateIconPackTask::assetOutputDirectory,
-        )
-        variant.sources.manifests.addGeneratedManifestFile(
-            generateIconPack,
-            GenerateIconPackTask::manifestOutputFile,
-        )
-    }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

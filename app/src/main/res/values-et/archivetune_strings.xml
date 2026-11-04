@@ -19,8 +19,6 @@
     <string name="my_top">Minu lemmikud</string>
     <string name="cached_playlist">Puhverdatud</string>
     <string name="sync_playlist">Sünkrooni esitusloend</string>
-    <string name="sync_disabled">Sünkroonimine pole kasutusel</string>
-    <string name="allows_for_sync_witch_youtube">Märkus: see võimaldab sünkroonimist YouTube Musicuga. Sa EI SAA seda seadistust hiljem muuta.</string>
     <string name="generating_image">Loon pilti</string>
     <string name="please_wait">Palun oota</string>
     <string name="cancel">Katkesta</string>
@@ -124,7 +122,6 @@
         <item quantity="other">%d sekundit</item>
     </plurals>
     <string name="disable">Lülita välja</string>
-    <string name="not_logged_in_youtube">Sa pole YouTube\'i sisse loginud</string>
     <string name="default_links">Ava toetatud lingid</string>
     <string name="open_app_settings_error">Rakenduse seadistuste avamine ei õnnestunud</string>
     <string name="top_length">Minu populaarsemate lugude loendi pikkus</string>

@@ -227,7 +227,6 @@ val StreamBypassProxyKey = booleanPreferencesKey("streamBypassProxy")
 val YtmSyncKey = booleanPreferencesKey("ytmSync")
 val ForceSyncOnAccountSwitchKey = booleanPreferencesKey("forceSyncOnAccountSwitch")
 val SelectedYtmPlaylistsKey = stringPreferencesKey("ytm_selected_playlists")
-val ImportSourcePriorityKey = booleanPreferencesKey("import_local_first")
 val LocalSongsMinDurationSecondsKey = intPreferencesKey("local_songs_min_duration_seconds")
 val LocalSongsIncludedFoldersKey = stringSetPreferencesKey("local_songs_included_folders")
 val LocalSongsExcludedFoldersKey = stringSetPreferencesKey("local_songs_excluded_folders")
@@ -467,7 +466,6 @@ val QuickPicksDisplayModeKey = stringPreferencesKey("quickPicksDisplayMode")
 enum class SongFilter {
     LIBRARY,
     LIKED,
-    DOWNLOADED,
 }
 
 enum class ArtistFilter {
@@ -478,8 +476,6 @@ enum class ArtistFilter {
 enum class AlbumFilter {
     LIBRARY,
     LIKED,
-    DOWNLOADED,
-    DOWNLOADED_FULL,
 }
 
 enum class SongSortType {
@@ -921,12 +917,6 @@ val AutomaticUpdateCheckKey = booleanPreferencesKey("automaticUpdateCheck")
 val EnableUpdateNotificationKey = booleanPreferencesKey("enableUpdateNotification")
 val LastUpdateCheckKey = longPreferencesKey("lastUpdateCheck")
 val LastNotifiedVersionKey = stringPreferencesKey("lastNotifiedVersion")
-
-val GitHubContributorsEtagKey = stringPreferencesKey("github_contributors_etag")
-val GitHubContributorsJsonKey = stringPreferencesKey("github_contributors_json")
-val GitHubContributorsLastCheckedAtKey = longPreferencesKey("github_contributors_last_checked_at")
-val GitHubTranslationContributorsJsonKey = stringPreferencesKey("github_translation_contributors_json")
-val GitHubTranslationContributorsLastCheckedAtKey = longPreferencesKey("github_translation_contributors_last_checked_at")
 
 val GitHubReleasesEtagKey = stringPreferencesKey("github_releases_etag")
 val GitHubReleasesJsonKey = stringPreferencesKey("github_releases_json")

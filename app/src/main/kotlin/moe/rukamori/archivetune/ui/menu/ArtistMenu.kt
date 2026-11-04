@@ -7,7 +7,6 @@
 
 package moe.rukamori.archivetune.ui.menu
 
-import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -66,7 +64,6 @@ fun ArtistMenu(
     coroutineScope: CoroutineScope,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val artistState = database.artist(originalArtist.id).collectAsStateWithLifecycle(initialValue = originalArtist)
@@ -174,35 +171,6 @@ fun ArtistMenu(
                                     ),
                                 )
                             }
-
-                            if (!artist.artist.isLocal && artist.artist.isYouTubeArtist) {
-                                add(
-                                    NewAction(
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.share),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        },
-                                        text = stringResource(R.string.share),
-                                        onClick = {
-                                            onDismiss()
-                                            val intent =
-                                                Intent().apply {
-                                                    action = Intent.ACTION_SEND
-                                                    type = "text/plain"
-                                                    putExtra(
-                                                        Intent.EXTRA_TEXT,
-                                                        "https://music.youtube.com/channel/${artist.id}",
-                                                    )
-                                                }
-                                            context.startActivity(Intent.createChooser(intent, null))
-                                        },
-                                    ),
-                                )
-                            }
                         },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                 )
@@ -223,9 +191,9 @@ fun ArtistMenu(
                                     if (artist.artist.bookmarkedAt !=
                                         null
                                     ) {
-                                        stringResource(if (artist.artist.isLocal) R.string.remove_from_library else R.string.subscribed)
+                                        stringResource(R.string.remove_from_library)
                                     } else {
-                                        stringResource(if (artist.artist.isLocal) R.string.add_to_library else R.string.subscribe)
+                                        stringResource(R.string.add_to_library)
                                     },
                             )
                         },

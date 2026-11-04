@@ -17,7 +17,6 @@
     <string name="quick_picks">Sélection Rapide</string>
     <string name="forgotten_favorites">Favoris oubliés</string>
     <string name="keep_listening">Continuez à écouter</string>
-    <string name="your_youtube_playlists">Vos playlists YouTube</string>
     <string name="similar_to">Similaire à</string>
     <string name="new_release_albums">Nouveautés</string>
     <string name="integration">Intégration</string>
@@ -27,7 +26,6 @@
     <string name="last_week">La semaine dernière</string>
     <string name="most_played_songs">Titres les plus joués</string>
     <string name="search">Rechercher</string>
-    <string name="search_yt_music">Rechercher sur YouTube Music</string>
     <string name="search_library">Rechercher dans la bibliothèque</string>
     <string name="filter_library">Bibliothèque</string>
     <string name="filter_liked">Aimé</string>
@@ -696,7 +694,6 @@
     <string name="discord_refresh_success">Mise à jour de la présence sur Discord</string>
     <string name="app_icon">Icône de l\'application</string>
     <string name="display">Affichage</string>
-    <string name="youtube_synced">Synchronisé avec YouTube</string>
     <string name="your_collection">Votre Collection</string>
     <string name="discord_login_description">Connectez votre compte Discord via OAuth afin qu\'ArchiveTune puisse publier des informations de présence enrichies.</string>
     <string name="personal_label">Personnel</string>
@@ -735,7 +732,6 @@
     <string name="widget_tap_to_open">Appuyez pour ouvrir ArchiveTune</string>
     <string name="discord_refresh_failed">Échec de l\'actualisation de la présence sur Discord</string>
     <string name="top_artist_badge">MEILLEUR ARTISTE</string>
-    <string name="youtube_channels">Chaînes YouTube</string>
     <string name="no_artist_yet">Aucun artiste pour l\'instant</string>
     <string name="discord_url_source_custom">URL personnalisée</string>
     <string name="total_label">total</string>

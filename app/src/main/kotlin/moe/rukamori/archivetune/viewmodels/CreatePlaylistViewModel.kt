@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.playlist.CreatePlaylistUseCase
-import moe.rukamori.archivetune.playlist.GetCreatePlaylistOptionsUseCase
 import javax.inject.Inject
 
 sealed interface CreatePlaylistScreenState {
@@ -46,10 +45,6 @@ sealed interface CreatePlaylistScreenState {
 @Immutable
 data class CreatePlaylistUiData(
     val name: String,
-    val allowSyncing: Boolean,
-    val isSignedIn: Boolean,
-    val isSyncEnabled: Boolean,
-    val syncRequested: Boolean,
     val isSubmitting: Boolean,
 ) {
     val canSubmit: Boolean
@@ -64,7 +59,6 @@ sealed interface CreatePlaylistEvent {
 class CreatePlaylistViewModel
     @Inject
     constructor(
-        private val getOptions: GetCreatePlaylistOptionsUseCase,
         private val createPlaylist: CreatePlaylistUseCase,
     ) : ViewModel() {
         private val mutableScreenState =
@@ -79,7 +73,6 @@ class CreatePlaylistViewModel
 
         fun open(
             initialName: String,
-            allowSyncing: Boolean,
         ) {
             if (createJob?.isActive == true) return
             loadJob?.cancel()
@@ -89,19 +82,12 @@ class CreatePlaylistViewModel
                     val initialData =
                         CreatePlaylistUiData(
                             name = initialName,
-                            allowSyncing = allowSyncing,
-                            isSignedIn = false,
-                            isSyncEnabled = false,
-                            syncRequested = false,
                             isSubmitting = false,
                         )
                     try {
-                        val options = getOptions()
                         mutableScreenState.value =
                             CreatePlaylistScreenState.Success(
                                 initialData.copy(
-                                    isSignedIn = options.isSignedIn,
-                                    isSyncEnabled = options.isSyncEnabled,
                                 ),
                             )
                     } catch (error: CancellationException) {
@@ -120,41 +106,6 @@ class CreatePlaylistViewModel
             updateData { data -> data.copy(name = name) }
         }
 
-        fun updateSyncRequested(requested: Boolean) {
-            val data = currentData() ?: return
-            if (!requested) {
-                mutableScreenState.value =
-                    CreatePlaylistScreenState.Success(
-                        data.copy(syncRequested = false),
-                    )
-                return
-            }
-            if (!data.allowSyncing) return
-
-            mutableScreenState.value =
-                when {
-                    !data.isSignedIn -> {
-                        CreatePlaylistScreenState.Error(
-                            data = data.copy(syncRequested = false),
-                            messageResId = R.string.not_logged_in_youtube,
-                        )
-                    }
-
-                    !data.isSyncEnabled -> {
-                        CreatePlaylistScreenState.Error(
-                            data = data.copy(syncRequested = false),
-                            messageResId = R.string.sync_disabled,
-                        )
-                    }
-
-                    else -> {
-                        CreatePlaylistScreenState.Success(
-                            data.copy(syncRequested = true),
-                        )
-                    }
-                }
-        }
-
         fun submit() {
             if (createJob?.isActive == true) return
             val data = currentData() ?: return
@@ -169,7 +120,6 @@ class CreatePlaylistViewModel
                     try {
                         createPlaylist(
                             name = data.name,
-                            syncRequested = data.syncRequested,
                         )
                         mutableScreenState.value =
                             CreatePlaylistScreenState.Success(

@@ -60,7 +60,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           token: ${{ secrets.RELEASE_PAT }}
-          submodules: true
           fetch-depth: 0
 
       - name: Set up Python 3.11
@@ -99,13 +98,6 @@ jobs:
 
       - name: Verify reproducible unsigned universal APK
         shell: bash
-        env:
-          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
-          API_BEARER_TOKEN: ${{ secrets.API_BEARER_TOKEN }}
-          TOGETHER_BEARER_TOKEN: ${{ secrets.TOGETHER_BEARER_TOKEN }}
-          CANVAS_BEARER_TOKEN: ${{ secrets.CANVAS_BEARER_TOKEN }}
-          EXTRACTOR_BEARER: ${{ secrets.EXTRACTOR_BEARER }}
         run: |
           set -euo pipefail
 
@@ -206,7 +198,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.reproducibility.outputs.commit_sha }}
-          submodules: true
           fetch-depth: 0
 
       - name: Set up Python 3.11
@@ -267,12 +258,6 @@ jobs:
         env:
           PULL_REQUEST: 'false'
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          LASTFM_API_KEY: ${{ matrix.distribution != 'foss' && secrets.LASTFM_API_KEY || '' }}
-          LASTFM_SECRET: ${{ matrix.distribution != 'foss' && secrets.LASTFM_SECRET || '' }}
-          API_BEARER_TOKEN: ${{ matrix.distribution != 'foss' && secrets.API_BEARER_TOKEN || '' }}
-          TOGETHER_BEARER_TOKEN: ${{ matrix.distribution != 'foss' && secrets.TOGETHER_BEARER_TOKEN || '' }}
-          CANVAS_BEARER_TOKEN: ${{ matrix.distribution != 'foss' && secrets.CANVAS_BEARER_TOKEN || '' }}
-          EXTRACTOR_BEARER: ${{ matrix.distribution != 'foss' && secrets.EXTRACTOR_BEARER || '' }}
 
       - name: Resolve release output directory
         id: release_dir
@@ -335,16 +320,6 @@ jobs:
           find app/build/outputs/apk -maxdepth 8 -type d -print || true
           exit 1
 
-      - name: Sign APK
-        uses: ilharp/sign-android-release@v2.0.0
-        with:
-          releaseDir: ${{ steps.release_dir.outputs.release_dir }}/
-          signingKey: ${{ secrets.KEYSTORE }}
-          keyAlias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-          buildToolsVersion: 37.0.0
-
       - name: Move and rename APK
         shell: bash
         run: |
@@ -353,7 +328,7 @@ jobs:
           mkdir -p "$RELEASE_DIR/out"
           mapfile -t SIGNED_APKS < <(
             find "$RELEASE_DIR" -maxdepth 1 -type f \
-              \( -name "*-signed.apk" -o -name "*-unsigned-signed.apk" \)
+              -name "*-release.apk"
           )
           if [ "${#SIGNED_APKS[@]}" -ne 1 ]; then
             echo "Expected exactly one signed APK in $RELEASE_DIR, found ${#SIGNED_APKS[@]}"

@@ -16,20 +16,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -42,16 +34,10 @@ import moe.rukamori.archivetune.artist.SetArtistBlockedUseCase
 import moe.rukamori.archivetune.constants.HideExplicitKey
 import moe.rukamori.archivetune.constants.HideVideoKey
 import moe.rukamori.archivetune.db.MusicDatabase
-import moe.rukamori.archivetune.extensions.filterBlockedArtists
 import moe.rukamori.archivetune.extensions.filterExplicit
 import moe.rukamori.archivetune.extensions.filterExplicitAlbums
 import moe.rukamori.archivetune.extensions.filterVideo
-import moe.rukamori.archivetune.innertube.YouTube
-import moe.rukamori.archivetune.innertube.models.filterExplicit
-import moe.rukamori.archivetune.innertube.models.filterVideo
-import moe.rukamori.archivetune.innertube.pages.ArtistPage
 import moe.rukamori.archivetune.utils.dataStore
-import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.utils.reportException
 import javax.inject.Inject
 
@@ -72,24 +58,10 @@ sealed interface ArtistBlockState {
 }
 
 sealed interface ArtistAction {
-    data object Share : ArtistAction
-
-    data object CopyLink : ArtistAction
-
     data object ToggleBlock : ArtistAction
 }
 
 sealed interface ArtistEvent {
-    @Immutable
-    data class Share(
-        val link: String,
-    ) : ArtistEvent
-
-    @Immutable
-    data class CopyLink(
-        val link: String,
-    ) : ArtistEvent
-
     @Immutable
     data class ShowMessage(
         @StringRes val messageRes: Int,
@@ -108,10 +80,6 @@ class ArtistViewModel
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         val artistId = savedStateHandle.get<String>("artistId")!!
-        private val _artistPage = MutableStateFlow<ArtistPage?>(null)
-        val artistPage = _artistPage.asStateFlow()
-        private val showLibrary = MutableStateFlow(false)
-        private var fetchJob: Job? = null
         private val eventChannel = Channel<ArtistEvent>(capacity = Channel.BUFFERED)
         val events = eventChannel.receiveAsFlow()
         private var blockJob: Job? = null
@@ -120,6 +88,7 @@ class ArtistViewModel
             database
                 .artist(artistId)
                 .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
         val blockState =
             observeArtistBlocked(artistId)
                 .map { blocked ->
@@ -131,6 +100,7 @@ class ArtistViewModel
                 }.catch {
                     emit(ArtistBlockState.Error(R.string.error_unknown))
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArtistBlockState.Loading)
+
         val librarySongs =
             context.dataStore.data
                 .map { preferences ->
@@ -142,6 +112,7 @@ class ArtistViewModel
                         it.filterExplicit(hideExplicit).filterVideo(hideVideo)
                     }
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
         val libraryAlbums =
             context.dataStore.data
                 .map { it[HideExplicitKey] ?: false }
@@ -150,64 +121,8 @@ class ArtistViewModel
                     database.artistAlbumsPreview(artistId).map { it.filterExplicitAlbums(hideExplicit) }
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-        val showLocal = combine(libraryArtist, librarySongs, artistPage, showLibrary) { artist, songs, page, selected ->
-            artist?.artist?.isLocal == true || selected || (page == null && songs.isNotEmpty())
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-        fun toggleLibrary() {
-            showLibrary.value = !showLocal.value
-            if (!showLibrary.value && artistPage.value == null) fetchArtistsFromYTM()
-        }
-
-        init {
-            viewModelScope.launch {
-                context.dataStore.data
-                    .map { preferences ->
-                        (preferences[HideExplicitKey] ?: false) to (preferences[HideVideoKey] ?: false)
-                    }
-                    .distinctUntilChanged()
-                    .collect {
-                        fetchArtistsFromYTM()
-                    }
-            }
-        }
-
-        fun fetchArtistsFromYTM() {
-            fetchJob?.cancel()
-            fetchJob = viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    val storedArtist = database.artist(artistId).firstOrNull()?.artist
-                    if (storedArtist?.isLocal == true || storedArtist?.isYouTubeArtist == false) return@launch
-                    val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                    val hideVideo = context.dataStore.get(HideVideoKey, false)
-                    val blockedArtistIds = database.getBlockedArtistIds().toSet()
-                    val page = YouTube.artist(storedArtist?.id ?: artistId).getOrThrow()
-                    val filteredSections = page.sections.map { section ->
-                        section.copy(
-                            items = section.items
-                                .filterExplicit(hideExplicit)
-                                .filterVideo(hideVideo)
-                                .filterBlockedArtists(blockedArtistIds),
-                        )
-                    }
-                    currentCoroutineContext().ensureActive()
-                    _artistPage.value = page.copy(sections = filteredSections)
-                    database.artist(artistId).firstOrNull()?.artist?.let { artistEntity ->
-                        database.update(artistEntity, page)
-                    }
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (throwable: Throwable) {
-                    reportException(throwable)
-                    eventChannel.send(ArtistEvent.ShowMessage(R.string.error_unknown))
-                }
-            }
-        }
-
         fun onAction(action: ArtistAction) {
             when (action) {
-                ArtistAction.Share -> artistShareLink()?.let { eventChannel.trySend(ArtistEvent.Share(it)) }
-                ArtistAction.CopyLink -> artistShareLink()?.let { eventChannel.trySend(ArtistEvent.CopyLink(it)) }
                 ArtistAction.ToggleBlock -> toggleBlocked()
             }
         }
@@ -215,9 +130,8 @@ class ArtistViewModel
         private fun toggleBlocked() {
             if (blockJob?.isActive == true) return
 
-            val pageArtist = artistPage.value?.artist
             val localArtist = libraryArtist.value?.artist
-            val artistName = pageArtist?.title ?: localArtist?.name ?: return
+            val artistName = localArtist?.name ?: return
             val currentlyBlocked = (blockState.value as? ArtistBlockState.Success)?.isBlocked == true
 
             blockJob =
@@ -225,10 +139,10 @@ class ArtistViewModel
                     try {
                         setArtistBlocked(
                             ArtistBlockRequest(
-                                id = localArtist?.id ?: artistId,
+                                id = localArtist.id,
                                 name = artistName,
-                                channelId = pageArtist?.channelId ?: localArtist?.channelId,
-                                thumbnailUrl = pageArtist?.thumbnail ?: localArtist?.thumbnailUrl,
+                                channelId = localArtist.channelId,
+                                thumbnailUrl = localArtist.thumbnailUrl,
                                 blocked = !currentlyBlocked,
                             ),
                         )
@@ -239,11 +153,5 @@ class ArtistViewModel
                         eventChannel.send(ArtistEvent.ShowMessage(R.string.error_unknown))
                     }
                 }
-        }
-
-        private fun artistShareLink(): String? {
-            val artist = libraryArtist.value?.artist
-            if (artist?.isLocal == true || artist?.isYouTubeArtist == false) return null
-            return artistPage.value?.artist?.shareLink ?: "https://music.youtube.com/channel/${artist?.id ?: artistId}"
         }
     }

@@ -12,15 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 
 @Immutable
-data class SettingsProfileState(
-    val isLoading: Boolean,
-    val isLoggedIn: Boolean,
-    val accountName: String,
-    val accountEmail: String,
-    val accountImageUrl: String?,
-)
-
-@Immutable
 data class SettingsGroup(
     val title: String,
     val items: List<SettingsItem>,

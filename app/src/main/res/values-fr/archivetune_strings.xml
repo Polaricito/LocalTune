@@ -20,8 +20,6 @@
     <string name="my_top">Mon Top</string>
     <string name="cached_playlist">En Cache</string>
     <string name="sync_playlist">Synchroniser la Playlist</string>
-    <string name="sync_disabled">Synchronisation désactivée</string>
-    <string name="allows_for_sync_witch_youtube">Remarque : Ceci permet la synchronisation avec YouTube Music. Ce paramètre ne peut pas être modifié ultérieurement.</string>
     <string name="generating_image">Génération de l\'image</string>
     <string name="please_wait">Veuillez patienter</string>
     <string name="cancel">Annuler</string>
@@ -110,7 +108,6 @@
     <string name="clear_image_cache_dialog">Êtes-vous sûr de vouloir effacer toutes les images mises en cache ?</string>
     <string name="clear_downloads_dialog">Êtes-vous sûr de vouloir supprimer tous les téléchargements ?</string>
     <string name="disable">Désactiver</string>
-    <string name="not_logged_in_youtube">Non connecté à YouTube</string>
     <string name="default_links">Ouvrir les liens supportés</string>
     <string name="open_app_settings_error">Impossible d\'ouvrir les paramètres de l\'application</string>
     <string name="release_notes">Notes de version</string>
@@ -643,8 +640,6 @@
     <string name="use_system_language">Utiliser la langue du système</string>
     <string name="backup_category_downloads">Télécharger à nouveau les morceaux hors ligne</string>
     <string name="backup_category_downloads_desc">Sera téléchargé à nouveau lors de la restauration</string>
-    <string name="import_priority_setting_title">Priorité de la source d\'importation</string>
-    <string name="import_priority_setting_desc">Choisissez où les morceaux importés doivent être classés.</string>
     <string name="aod_clock_bold_digital">Numérique audacieux</string>
     <string name="aod_clock_minimal">Minimale</string>
     <string name="aod_clock_elegant_thin">Élégant et fin</string>
@@ -659,12 +654,7 @@
     <string name="aod_customize_auto_lock_delay_value">%ds</string>
     <string name="aod_customize_marquee_titles">Titres de morceaux phares</string>
     <string name="aod_customize_marquee_titles_desc">Afficher les titres de morceaux longs en faisant défiler la liste plutôt que de les tronquer</string>
-    <string name="import_priority_local_first">Priorité au local</string>
-    <string name="import_priority_local_first_desc">Commencez par effectuer une recherche dans la bibliothèque locale, puis sur YouTube Music si vous ne trouvez rien.</string>
-    <string name="import_priority_youtube_only">YouTube Music uniquement</string>
-    <string name="import_priority_youtube_only_desc">Ignorez la recherche dans votre bibliothèque locale et effectuez directement une recherche sur YouTube Music.</string>
     <string name="import_source_local">Bibliothèque locale</string>
-    <string name="import_source_youtube">YouTube Music</string>
     <string name="import_source_unresolved">Introuvable</string>
     <string name="import_review_title">Examen des importations</string>
     <string name="import_review_summary">%1$d locaux · %2$d YouTube Music · %3$d non résolus</string>
@@ -679,7 +669,6 @@
     <string name="import_filter_unresolved">Non résolu</string>
     <string name="import_search_query">Rechercher par titre et par artiste</string>
     <string name="import_search_local">Recherche locale</string>
-    <string name="import_search_youtube">Rechercher sur YouTube</string>
     <string name="import_no_search_results">Aucun titre correspondant n\'a été trouvé.</string>
     <string name="import_matched_to">Correspondance trouvée : %1$s — %2$s</string>
     <string name="change_song_source">Modifier la source</string>

@@ -1,27 +1,22 @@
-Pemutar Musik Material 3 Terlucu dengan Dukungan Lokal & YouTube untuk Android.
+Pemutar musik modern yang sepenuhnya offline untuk Android.
+
+ArchiveTune memutar musik yang sudah tersimpan di perangkat Anda. Aplikasi ini tidak memiliki izin internet, tanpa akun, tanpa iklan, dan tanpa pelacakan. Pustaka, daftar putar, riwayat mendengarkan, dan lirik tetap berada di ponsel Anda.
 
 Fitur:
-
-- Pemutaran bebas iklan dengan dukungan pemutaran latar belakang
-- Daftar putar, lagu yang disukai, dan langganan Anda muncul setelah masuk
-- Mendukung Pemutaran File Lokal
-- Startup cepat dan performa ringan
-- Pengalaman mendengarkan yang privat dan tanpa gangguan
-- Normalisasi loudness EBU R128
-- Kontrol tempo, pitch, dan kecepatan pemutaran
-- Crossfade antar lagu
-- Integrasi equalizer sistem dan spatial audio
-- Lirik sinkron langsung
-- Terjemahan dan romanisasi lirik
-- Pengenalan musik untuk lagu di sekitar Anda
-- Statistik mendengarkan kapan pun Anda mau
-- Integrasi akun YouTube Music
-- Scrobbling Last.fm
-- Sinkronisasi riwayat ListenBrainz
-- Dukungan Discord rich presence
-- Bahasa desain Material 3
-- Warna dinamis berbasis artwork album
-- Tata letak responsif untuk berbagai ukuran layar
-- Pengaturan pemutaran dan antarmuka yang mendalam
-- Kustomisasi gestur
-- Penyesuaian animasi dan tata letak
+<ul>
+<li>Jelajahi lagu, album, dan artis dari pustaka lokal</li>
+<li>Buat dan kelola daftar putar lokal dengan sampul khusus</li>
+<li>Pemutaran latar belakang dengan sesi media dan kontrol antrean</li>
+<li>Acak, ulangi, crossfade, dan pengatur waktu tidur</li>
+<li>Normalisasi kenyaringan EBU R128</li>
+<li>Kontrol tempo, nada, dan kecepatan pemutaran</li>
+<li>Integrasi equalizer sistem dan audio spasial</li>
+<li>Lirik sinkron dari tag audio atau file .lrc di samping lagu</li>
+<li>Transkripsi lirik di perangkat dengan whisper.cpp</li>
+<li>Pembuatan lirik massal untuk seluruh pustaka atau satu daftar putar</li>
+<li>Widget layar utama dan pemutar always-on display</li>
+<li>Antarmuka Material 3 dengan warna dinamis dari sampul album</li>
+<li>Berbagai gaya pemutar, latar belakang, gestur, dan animasi</li>
+<li>Backup dan pemulihan data aplikasi secara lokal</li>
+<li>Tanpa akses jaringan, tanpa analitik, dan tanpa iklan</li>
+</ul>

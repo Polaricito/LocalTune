@@ -16,7 +16,6 @@
     <string name="speed_dial">스피드 다이얼</string>
     <string name="forgotten_favorites">잊고 있던 좋은 음악</string>
     <string name="keep_listening">이어서 듣기</string>
-    <string name="your_youtube_playlists">내 YouTube 재생목록</string>
     <string name="similar_to">아래 아티스트와 유사한 음악</string>
     <string name="new_release_albums">최신 발매 앨범</string>
     <string name="integration">계정 연동</string>
@@ -26,7 +25,6 @@
     <string name="last_week">지난주</string>
     <string name="most_played_songs">가장 많이 재생한 곡</string>
     <string name="search">검색</string>
-    <string name="search_yt_music">YouTube Music 검색</string>
     <string name="search_library">보관함 검색</string>
     <string name="filter_library">보관함</string>
     <string name="filter_liked">좋아요 표시한 음악</string>
@@ -683,7 +681,6 @@
     <string name="discord_url_source_song">곡 URL</string>
     <string name="discord_refresh_success">Discord Rich Presence를 새로고침했습니다.</string>
     <string name="app_icon">앱 아이콘</string>
-    <string name="youtube_synced">YouTube 동기화됨</string>
     <string name="your_collection">내 컬렉션</string>
     <string name="discord_login_description">내 Discord 계정을 안전하게 연동하여 내가 듣고 있는 음악 정보를 프로필 상태 메시지에 실시간으로 보여줍니다.</string>
     <string name="personal_label">개인용</string>
@@ -718,7 +715,6 @@
     <string name="discord_refresh_failed">Discord Rich Presence 새로고침 실패</string>
     <string name="top_artist_badge">인기 아티스트</string>
     <string name="your_playlists">내 재생목록</string>
-    <string name="youtube_channels">YouTube 공식 아티스트 채널</string>
     <string name="no_artist_yet">등록된 아티스트가 없습니다.</string>
     <string name="discord_url_source_custom">사용자 정의 URL</string>
     <string name="total_label">총</string>

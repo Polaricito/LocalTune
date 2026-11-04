@@ -13,7 +13,6 @@ import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.media3.datasource.cache.Cache
 import coil3.imageLoader
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
@@ -29,20 +28,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import moe.rukamori.archivetune.constants.GitHubContributorsEtagKey
-import moe.rukamori.archivetune.constants.GitHubContributorsJsonKey
-import moe.rukamori.archivetune.constants.GitHubContributorsLastCheckedAtKey
-import moe.rukamori.archivetune.constants.GitHubTranslationContributorsJsonKey
-import moe.rukamori.archivetune.constants.GitHubTranslationContributorsLastCheckedAtKey
 import moe.rukamori.archivetune.constants.StorageFolderDisplayNameKey
 import moe.rukamori.archivetune.constants.StorageFolderIdKey
 import moe.rukamori.archivetune.constants.StorageFolderPathKey
 import moe.rukamori.archivetune.constants.StorageFolderTreeUriKey
-import moe.rukamori.archivetune.di.DownloadCache
-import moe.rukamori.archivetune.di.PlayerCache
-import moe.rukamori.archivetune.downloads.DownloadedArtworkRepository
-import moe.rukamori.archivetune.playback.DownloadUtil
-import moe.rukamori.archivetune.ui.player.CanvasArtworkPlaybackCache
 import moe.rukamori.archivetune.utils.ArtworkStorage
 import moe.rukamori.archivetune.utils.PreferenceStore
 import moe.rukamori.archivetune.utils.dataStore
@@ -52,10 +41,7 @@ import javax.inject.Inject
 enum class StorageFolderKind(
     val defaultDirectoryName: String,
 ) {
-    SONG_CACHE(defaultDirectoryName = "exoplayer"),
-    DOWNLOADS(defaultDirectoryName = "download"),
     IMAGE_CACHE(defaultDirectoryName = "coil"),
-    CANVAS_CACHE(defaultDirectoryName = "canvas"),
     ARTWORK_CACHE(defaultDirectoryName = "artwork"),
 }
 
@@ -109,7 +95,6 @@ data class StorageCacheClearProgress(
 
 enum class StorageMigrationPhase {
     CACHE,
-    DOWNLOADS,
 }
 
 sealed interface StorageFolderUpdateResult {
@@ -123,10 +108,7 @@ sealed interface StorageFolderUpdateResult {
 }
 
 enum class StorageCacheKind {
-    SONGS,
-    DOWNLOADS,
     IMAGES,
-    CANVAS,
 }
 
 sealed interface StorageCacheClearResult {
@@ -184,10 +166,6 @@ class StorageLocationRepository
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-        @PlayerCache private val playerCache: Cache,
-        @DownloadCache private val downloadCache: Cache,
-        private val downloadUtil: DownloadUtil,
-        private val downloadedArtworkRepository: DownloadedArtworkRepository,
     ) {
         val selection: Flow<StorageFolderSelection> =
             context.dataStore.data.map { preferences ->
@@ -203,10 +181,7 @@ class StorageLocationRepository
                     onProgress(StorageCacheClearProgress(kind = kind, percent = 0))
                     val cleared =
                         when (kind) {
-                            StorageCacheKind.SONGS -> clearMediaCache(playerCache, StorageCacheKind.SONGS, onProgress)
-                            StorageCacheKind.DOWNLOADS -> clearDownloads(onProgress)
                             StorageCacheKind.IMAGES -> clearImageCache(onProgress)
-                            StorageCacheKind.CANVAS -> clearCanvasCache(onProgress)
                         }
                     if (cleared) {
                         onProgress(StorageCacheClearProgress(kind = kind, percent = 100))
@@ -324,27 +299,14 @@ class StorageLocationRepository
         ): StorageMigrationPlan =
             StorageMigrationPlan(
                 cacheDirectories =
-                    StorageFolderKind.entries
-                        .filterNot { kind -> kind == StorageFolderKind.DOWNLOADS }
-                        .map { kind ->
-                            StorageDirectoryMove(
-                                source = activeCacheDirectory(preferences, kind),
-                                target = targetDirectory(kind),
-                            )
-                        },
-                downloadDirectories =
-                    listOf(
+                    StorageFolderKind.entries.map { kind ->
                         StorageDirectoryMove(
-                            source = activeCacheDirectory(preferences, StorageFolderKind.DOWNLOADS),
-                            target = targetDirectory(StorageFolderKind.DOWNLOADS),
-                        ),
-                    ),
+                            source = activeCacheDirectory(preferences, kind),
+                            target = targetDirectory(kind),
+                        )
+                    },
                 cacheFiles =
                     listOf(
-                        StorageFileMove(
-                            source = context.filesDir.resolve(CanvasArtworkCacheFileName),
-                            target = targetDirectory(StorageFolderKind.CANVAS_CACHE).resolve(CanvasArtworkCacheFileName),
-                        ),
                         StorageFileMove(
                             source = context.filesDir.resolve(SavedArtworkCacheFileName),
                             target = targetDirectory(StorageFolderKind.ARTWORK_CACHE).resolve(SavedArtworkCacheFileName),
@@ -359,56 +321,6 @@ class StorageLocationRepository
             val configuredPath = preferences[StorageFolderPathKey]?.takeIf(String::isNotBlank)
             val configuredDirectory = configuredPath?.let(::File)?.resolve(kind.defaultDirectoryName)
             return configuredDirectory ?: context.defaultCacheDirectory(kind)
-        }
-
-        private fun releaseCachesForMigration() {
-            runCatching { playerCache.release() }
-            runCatching { downloadCache.release() }
-        }
-
-        private suspend fun clearMediaCache(
-            cache: Cache,
-            kind: StorageCacheKind,
-            onProgress: suspend (StorageCacheClearProgress) -> Unit,
-        ): Boolean {
-            val keys = runCatching { cache.keys.toList() }.getOrElse { return false }
-            val workUnitsByKey =
-                keys.associateWith { key ->
-                    cache.resourceWorkUnits(key)
-                }
-            val progressReporter =
-                StorageCacheClearReporter(
-                    kind = kind,
-                    totalWorkUnits = workUnitsByKey.values.sum().coerceAtLeast(keys.size.toLong()),
-                    minPercent = 0,
-                    maxPercent = 100,
-                    onProgress = onProgress,
-                )
-
-            var cleared = true
-            if (keys.isEmpty()) {
-                progressReporter.emitRemaining()
-                return true
-            }
-
-            keys.forEach { key ->
-                currentCoroutineContext().ensureActive()
-                val removed = runCatching { cache.removeResource(key) }.isSuccess
-                if (!removed) cleared = false
-                progressReporter.emit(workUnitsByKey.getValue(key))
-            }
-            progressReporter.emitRemaining()
-            return cleared
-        }
-
-        private suspend fun clearDownloads(onProgress: suspend (StorageCacheClearProgress) -> Unit): Boolean =
-            runCatching {
-                downloadUtil.downloadManager.removeAllDownloads()
-            }.isSuccess && clearMediaCache(downloadCache, StorageCacheKind.DOWNLOADS, onProgress)
-
-        private suspend fun clearCanvasCache(onProgress: suspend (StorageCacheClearProgress) -> Unit): Boolean {
-            val memoryAndIndexCleared = CanvasArtworkPlaybackCache.clearAndPersist()
-            return memoryAndIndexCleared && clearCacheDirectory(StorageFolderKind.CANVAS_CACHE, onProgress)
         }
 
         private suspend fun clearImageCache(onProgress: suspend (StorageCacheClearProgress) -> Unit): Boolean {
@@ -437,24 +349,10 @@ class StorageLocationRepository
                     minPercent = 70,
                     maxPercent = 90,
                 )
-            downloadedArtworkRepository.invalidateMemoryIndex()
             val artworkCleared = ArtworkStorage.clear(context)
             onProgress(StorageCacheClearProgress(kind = StorageCacheKind.IMAGES, percent = 95))
-            val cacheCleared = diskCacheCleared && artworkCacheCleared && artworkCleared
-            val contributorCacheCleared = if (cacheCleared) clearGitHubContributorCache() else false
-            return cacheCleared && contributorCacheCleared
+            return diskCacheCleared && artworkCacheCleared && artworkCleared
         }
-
-        private suspend fun clearGitHubContributorCache(): Boolean =
-            runCatching {
-                context.dataStore.edit { preferences ->
-                    preferences.remove(GitHubContributorsEtagKey)
-                    preferences.remove(GitHubContributorsJsonKey)
-                    preferences.remove(GitHubContributorsLastCheckedAtKey)
-                    preferences.remove(GitHubTranslationContributorsJsonKey)
-                    preferences.remove(GitHubTranslationContributorsLastCheckedAtKey)
-                }
-            }.isSuccess
 
         private suspend fun clearCacheDirectory(
             kind: StorageFolderKind,
@@ -499,17 +397,10 @@ class StorageLocationRepository
 
         private suspend fun StorageMigrationPlan.withProgress(onProgress: suspend (StorageMigrationProgress) -> Unit): Boolean =
             try {
-                releaseCachesForMigration()
                 moveMigrationPhase(
                     phase = StorageMigrationPhase.CACHE,
                     directories = cacheDirectories,
                     files = cacheFiles,
-                    onProgress = onProgress,
-                )
-                moveMigrationPhase(
-                    phase = StorageMigrationPhase.DOWNLOADS,
-                    directories = downloadDirectories,
-                    files = emptyList(),
                     onProgress = onProgress,
                 )
                 true
@@ -658,7 +549,7 @@ class StorageLocationRepository
 private fun Context.defaultCacheDirectory(kind: StorageFolderKind): File =
     when (kind) {
         StorageFolderKind.IMAGE_CACHE -> cacheDir.resolve(kind.defaultDirectoryName)
-        else -> filesDir.resolve(kind.defaultDirectoryName)
+        StorageFolderKind.ARTWORK_CACHE -> filesDir.resolve(kind.defaultDirectoryName)
     }
 
 private fun Context.defaultStorageRootDirectory(): File = filesDir
@@ -820,13 +711,6 @@ private fun File.deletionWorkUnits(): Long {
 
 private fun File.deleteWorkUnits(): Long = length().coerceAtLeast(1L)
 
-private fun Cache.resourceWorkUnits(key: String): Long =
-    runCatching {
-        getCachedSpans(key)
-            .sumOf { span -> span.length.coerceAtLeast(1L) }
-            .coerceAtLeast(1L)
-    }.getOrDefault(1L)
-
 private fun File.isDirectoryEmpty(): Boolean =
     runCatching {
         val children = listFiles() ?: return@runCatching false
@@ -890,7 +774,6 @@ private class StorageCacheClearReporter(
 
 private data class StorageMigrationPlan(
     val cacheDirectories: List<StorageDirectoryMove>,
-    val downloadDirectories: List<StorageDirectoryMove>,
     val cacheFiles: List<StorageFileMove>,
 )
 
@@ -906,15 +789,9 @@ private data class StorageFileMove(
 
 private fun StorageFolderKind.toCacheKind(): StorageCacheKind =
     when (this) {
-        StorageFolderKind.SONG_CACHE -> StorageCacheKind.SONGS
-
-        StorageFolderKind.DOWNLOADS -> StorageCacheKind.DOWNLOADS
-
         StorageFolderKind.IMAGE_CACHE,
         StorageFolderKind.ARTWORK_CACHE,
         -> StorageCacheKind.IMAGES
-
-        StorageFolderKind.CANVAS_CACHE -> StorageCacheKind.CANVAS
     }
 
 private fun File.toStorageLocationOption(
@@ -964,5 +841,4 @@ private const val ExternalStorageOptionIdPrefix = "external:"
 private const val ExternalStorageRootDirectoryName = "ArchiveTune"
 private const val AppRestartDelayMillis = 3_000L
 private const val StorageCopyBufferSizeBytes = 64 * 1024
-private const val CanvasArtworkCacheFileName = "canvas_artwork_cache.json"
 private const val SavedArtworkCacheFileName = "archivetune_saved_artworks.json"

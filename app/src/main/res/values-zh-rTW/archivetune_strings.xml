@@ -170,8 +170,6 @@
     <string name="sync_playlist">同步播放清單</string>
     <string name="playlist_sync_progress_step">%1$d/%2$d 首歌曲</string>
     <string name="playlist_sync_failed">播放清單同步失敗：%1$s</string>
-    <string name="sync_disabled">同步已停用</string>
-    <string name="allows_for_sync_witch_youtube">注意：此選項支援與 YouTube Music 同步。此設定一旦確定，後續無法更改。</string>
     <string name="generating_image">正在生成圖片</string>
     <string name="please_wait">請稍後</string>
     <string name="cancel">取消</string>
@@ -365,7 +363,6 @@
     <string name="clear_canvas_cache">清除畫布快取</string>
     <string name="clear_canvas_cache_dialog">您確定要清除所有畫布快取嗎？</string>
     <string name="disable">停用</string>
-    <string name="not_logged_in_youtube">未登入 YouTube</string>
     <string name="default_links">打開支援的連結</string>
     <string name="open_app_settings_error">無法開啟應用程式設定</string>
     <string name="release_notes">發布說明</string>
@@ -648,14 +645,7 @@
     <string name="stats_artist_breakdown">藝人構成分析</string>
     <string name="backup_category_downloads">重新下載離線歌曲</string>
     <string name="backup_category_downloads_desc">恢復時將重新下載</string>
-    <string name="import_priority_setting_title">導入來源優先級</string>
-    <string name="import_priority_setting_desc">選擇導入歌曲的匹配位置。</string>
-    <string name="import_priority_local_first">本地優先</string>
-    <string name="import_priority_local_first_desc">先搜尋本地音樂庫，若未找到符合結果，再搜尋 YouTube Music。</string>
-    <string name="import_priority_youtube_only">僅限 YouTube Music</string>
-    <string name="import_priority_youtube_only_desc">跳過本地媒體庫匹配，直接搜尋 YouTube Music。</string>
     <string name="import_source_local">本地媒體庫</string>
-    <string name="import_source_youtube">YouTube Music</string>
     <string name="import_source_unresolved">未找到</string>
     <string name="import_review_title">導入預覽</string>
     <string name="import_review_summary">%1$d 首本地曲目 · %2$d 首 YouTube Music 曲目 · %3$d 首未解析曲目</string>
@@ -670,7 +660,6 @@
     <string name="import_filter_unresolved">未解決</string>
     <string name="import_search_query">搜尋標題和藝人</string>
     <string name="import_search_local">搜尋本地</string>
-    <string name="import_search_youtube">搜尋 YouTube</string>
     <string name="import_no_search_results">未找到符合的歌曲。</string>
     <string name="import_matched_to">匹配至：%1$s — %2$s</string>
     <string name="change_song_source">更改來源</string>

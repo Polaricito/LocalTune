@@ -17,7 +17,6 @@
     <string name="speed_dial">Sürətli yığım</string>
     <string name="forgotten_favorites">Unudulmuş sevimlilər</string>
     <string name="keep_listening">Dinləməyə davam et</string>
-    <string name="your_youtube_playlists">Sizin YouTube pleylistləriniz</string>
     <string name="similar_to">Bənzər</string>
     <string name="new_release_albums">Yeni çıxan albomlar</string>
     <string name="integration">Inteqrasiya</string>
@@ -27,7 +26,6 @@
     <string name="last_week">Keçən həftə</string>
     <string name="most_played_songs">Ən çox dinlənilən mahnılar</string>
     <string name="search">Axtarış</string>
-    <string name="search_yt_music">YouTube Music-də axtarın</string>
     <string name="search_library">Kitabxanada axtarın</string>
     <string name="filter_library">Kitabxana</string>
     <string name="filter_liked">Bəyənilənlər</string>

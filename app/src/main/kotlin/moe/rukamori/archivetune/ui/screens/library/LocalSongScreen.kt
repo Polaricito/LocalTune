@@ -157,7 +157,7 @@ fun LocalSongScreen(
     val (includedFolders, onIncludedFoldersChange) =
         rememberPreference(
             LocalSongsIncludedFoldersKey,
-            emptySet<String>(),
+            setOf("music", "/storage/emulated/0/music"),
         )
     val (excludedFolders, onExcludedFoldersChange) =
         rememberPreference(
@@ -486,7 +486,6 @@ fun LocalSongScreen(
                     SongListItem(
                         song = song,
                         showInLibraryIcon = false,
-                        showDownloadIcon = false,
                         showSongIconPlaceholder = true,
                         isActive = song.id == mediaMetadata?.id,
                         isPlaying = isPlaying,

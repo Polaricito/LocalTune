@@ -16,7 +16,6 @@
     <string name="quick_picks">Kiirvalikud</string>
     <string name="forgotten_favorites">Unustatud lemmikud</string>
     <string name="keep_listening">Jätka kuulamist</string>
-    <string name="your_youtube_playlists">Sinu YouTube\'i esitusloendid</string>
     <string name="similar_to">Sarnane nagu</string>
     <string name="new_release_albums">Uued avaldatud albumid</string>
     <string name="integration">Lõiming</string>
@@ -26,7 +25,6 @@
     <string name="last_week">Eelmisel nädalal</string>
     <string name="most_played_songs">Kõige rohkem esitatud lood</string>
     <string name="search">Otsi</string>
-    <string name="search_yt_music">Otsi YouTube Musicust…</string>
     <string name="search_library">Otsi muusikakogust…</string>
     <string name="filter_library">Muusikakogu</string>
     <string name="filter_liked">Meeldivaks märgitud</string>

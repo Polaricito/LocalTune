@@ -17,7 +17,6 @@
     <string name="quick_picks">Selecciones rápidas</string>
     <string name="forgotten_favorites">Tus favoritos del pasado</string>
     <string name="keep_listening">Sigue escuchando</string>
-    <string name="your_youtube_playlists">Tus playlists de YouTube</string>
     <string name="similar_to">Similar a</string>
     <string name="new_release_albums">Nuevos lanzamientos</string>
     <string name="today">Hoy</string>
@@ -26,7 +25,6 @@
     <string name="last_week">Última semana</string>
     <string name="most_played_songs">Canciones más escuchadas</string>
     <string name="search">Buscar</string>
-    <string name="search_yt_music">Buscar en YouTube Music</string>
     <string name="search_library">Buscar en la biblioteca</string>
     <string name="filter_library">Biblioteca</string>
     <string name="filter_liked">Me gustan</string>
@@ -684,7 +682,6 @@
     <string name="list_view">Vista de la lista</string>
     <string name="grid_view">Vista en cuadrícula</string>
     <string name="personal_label">Personal</string>
-    <string name="youtube_synced">Sincronizado con YouTube</string>
     <string name="options_label">Opciones</string>
     <string name="top_artist_badge">ARTISTA DESTACADO</string>
     <string name="no_artist_yet">Aún no hay artista</string>
@@ -769,7 +766,6 @@
     <string name="save_current_account">Guardar la cuenta actual</string>
     <string name="no_saved_accounts">Aún no hay cuentas guardadas</string>
     <string name="remove_account">Eliminar cuenta</string>
-    <string name="youtube_channels">Canales de YouTube</string>
     <string name="enable_youlyplus_lyrics">Activar las letras de YouLyPlus</string>
     <string name="source">Origen</string>
     <plurals name="widget_total_plays">

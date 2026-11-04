@@ -16,7 +16,6 @@
     <string name="speed_dial">Panggilan cepat</string>
     <string name="forgotten_favorites">Favorit yang terlupakan</string>
     <string name="keep_listening">Teruslah mendengarkan</string>
-    <string name="your_youtube_playlists">Playlist YouTube Kowe</string>
     <string name="similar_to">Mirip dengan</string>
     <string name="new_release_albums">Album rilis baru</string>
     <string name="integration">Integrasi</string>
@@ -26,7 +25,6 @@
     <string name="last_week">Minggu wingi</string>
     <string name="most_played_songs">Lagu yang paling banyak diputer</string>
     <string name="search">Golek</string>
-    <string name="search_yt_music">Telusuri YouTube Music</string>
     <string name="search_library">Golek pustaka</string>
     <string name="filter_library">Pustaka</string>
     <string name="filter_liked">Disukai</string>

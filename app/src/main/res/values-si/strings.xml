@@ -8,7 +8,6 @@
     <string name="history">කලින් බලපුවා</string>
     <string name="stats">ශ්‍රේණිගත කිරීම්</string>
     <string name="keep_listening">ආපහු අහන්න</string>
-    <string name="your_youtube_playlists">ඔයාගෙ ප්ලේ ලිස්ට්ස්</string>
     <string name="similar_to">මේ වගේම</string>
     <string name="new_release_albums">අලුතින් ආපු ඇල්බම්</string>
     <string name="today">අද</string>
@@ -17,7 +16,6 @@
     <string name="last_week">ගිය සතියේ</string>
     <string name="most_played_songs">වැඩියෙන්ම අහපු සින්දු</string>
     <string name="search">හොයන්න</string>
-    <string name="search_yt_music">YouTube Music එකේ හොයන්න</string>
     <string name="search_library">Library එකේ හොයන්න</string>
     <string name="filter_all">ඔක්කොම</string>
     <string name="filter_songs">සින්දු</string>

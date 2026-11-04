@@ -20,8 +20,6 @@
     <string name="my_top">الأفضل بالنسبة لي</string>
     <string name="cached_playlist">الأغاني المخزنة مؤقتًا</string>
     <string name="sync_playlist">مزامنة قائمة التشغيل</string>
-    <string name="sync_disabled">المزامنة غير مفعلة</string>
-    <string name="allows_for_sync_witch_youtube">ملاحظة: يسمح هذا بالمزامنة مع YouTube Music. لا يمكن تغيير هذا لاحقًا.</string>
     <string name="generating_image">جاري إنشاء الصورة</string>
     <string name="please_wait">انتظر من فضلك</string>
     <string name="cancel">إلغاء</string>
@@ -131,7 +129,6 @@
     <string name="clear_image_cache_dialog">هل أنت متأكد من رغبتك في مسح جميع الصور المخزنة مؤقتًا؟</string>
     <string name="clear_downloads_dialog">هل أنت متأكد من رغبتك في مسح جميع التنزيلات؟</string>
     <string name="disable">تعطيل</string>
-    <string name="not_logged_in_youtube">لم يتم تسجيل الدخول إلى YouTube</string>
     <string name="default_links">فتح الروابط المدعومة افتراضيًا</string>
     <string name="open_app_settings_error">لم يتمكن التطبيق من فتح إعدادات التطبيق</string>
     <string name="release_notes">ملاحظات الإصدار</string>

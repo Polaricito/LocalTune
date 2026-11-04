@@ -7,230 +7,57 @@
 
 package moe.rukamori.archivetune.ui.screens
 
-import android.net.Uri
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import moe.rukamori.archivetune.BuildConfig
-import moe.rukamori.archivetune.musicrecognition.MusicRecognitionRoute
-import moe.rukamori.archivetune.musicrecognition.MusicRecognitionDetailsRoute
-import moe.rukamori.archivetune.ui.screens.BrowseScreen
 import moe.rukamori.archivetune.ui.screens.artist.ArtistAlbumsScreen
-import moe.rukamori.archivetune.ui.screens.artist.ArtistItemsScreen
 import moe.rukamori.archivetune.ui.screens.artist.ArtistScreen
 import moe.rukamori.archivetune.ui.screens.artist.ArtistSongsScreen
 import moe.rukamori.archivetune.ui.screens.library.LibraryScreen
 import moe.rukamori.archivetune.ui.screens.library.LocalSongScreen
-import moe.rukamori.archivetune.ui.screens.musicrecognition.MusicRecognitionScreen
-import moe.rukamori.archivetune.ui.screens.musicrecognition.MusicRecognitionDetailsScreen
-import moe.rukamori.archivetune.ui.screens.playlist.AutoPlaylistScreen
-import moe.rukamori.archivetune.ui.screens.playlist.CachePlaylistScreen
 import moe.rukamori.archivetune.ui.screens.playlist.LocalPlaylistScreen
-import moe.rukamori.archivetune.ui.screens.playlist.OnlinePlaylistScreen
-import moe.rukamori.archivetune.ui.screens.playlist.SpotifyLikedSongsScreen
-import moe.rukamori.archivetune.ui.screens.playlist.SpotifyPlaylistScreen
-import moe.rukamori.archivetune.ui.screens.playlist.TopPlaylistScreen
-import moe.rukamori.archivetune.ui.screens.podcast.PodcastRoute
-import moe.rukamori.archivetune.ui.screens.podcast.PodcastScreen
-import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResult
-import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResultArgument
-import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResultRoute
-import moe.rukamori.archivetune.ui.screens.search.OnlineSearchResultRoutePrefix
-import moe.rukamori.archivetune.ui.screens.search.SearchScreen
+import moe.rukamori.archivetune.ui.screens.search.LocalSearchTabScreen
 import moe.rukamori.archivetune.ui.screens.settings.AboutScreen
-import moe.rukamori.archivetune.ui.screens.settings.AccountSettings
-import moe.rukamori.archivetune.ui.screens.settings.AiIntegrationSettings
 import moe.rukamori.archivetune.ui.screens.settings.AodCustomizedScreen
-import moe.rukamori.archivetune.ui.screens.settings.AndroidAutoSettings
-import moe.rukamori.archivetune.ui.screens.settings.CanvasSettings
 import moe.rukamori.archivetune.ui.screens.settings.AppearanceSettings
 import moe.rukamori.archivetune.ui.screens.settings.BackupAndRestore
-import moe.rukamori.archivetune.ui.screens.settings.ChangelogScreen
-import moe.rukamori.archivetune.ui.screens.settings.ContentSettings
+import moe.rukamori.archivetune.ui.screens.settings.BatchLyricsScreen
 import moe.rukamori.archivetune.ui.screens.settings.CustomizeBackground
 import moe.rukamori.archivetune.ui.screens.settings.DebugSettings
-import moe.rukamori.archivetune.ui.screens.settings.DiscordSettings
 import moe.rukamori.archivetune.ui.screens.settings.HiddenPlaylistsScreen
 import moe.rukamori.archivetune.ui.screens.settings.IconScreen
-import moe.rukamori.archivetune.ui.screens.settings.IntegrationScreen
-import moe.rukamori.archivetune.ui.screens.settings.InternetSettings
-import moe.rukamori.archivetune.ui.screens.settings.LastFMSettings
 import moe.rukamori.archivetune.ui.screens.settings.LogcatScreen
 import moe.rukamori.archivetune.ui.screens.settings.LyricsAnimationSettings
-import moe.rukamori.archivetune.ui.screens.settings.LyricsSettings
-import moe.rukamori.archivetune.ui.screens.settings.MusicTogetherScreen
 import moe.rukamori.archivetune.ui.screens.settings.PalettePickerScreen
 import moe.rukamori.archivetune.ui.screens.settings.PlayerSettings
 import moe.rukamori.archivetune.ui.screens.settings.PrivacySettings
 import moe.rukamori.archivetune.ui.screens.settings.SettingsScreen
 import moe.rukamori.archivetune.ui.screens.settings.StorageSettings
-import moe.rukamori.archivetune.ui.screens.settings.ThemeCreatorScreen
-import moe.rukamori.archivetune.ui.screens.settings.UpdateScreen
-import moe.rukamori.archivetune.viewmodels.HomeViewModel
-import moe.rukamori.archivetune.viewmodels.OnlineSearchSort
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
     scrollBehavior: TopAppBarScrollBehavior,
-    homeViewModel: HomeViewModel,
-    latestVersionName: () -> String,
-    disableAnimations: Boolean = false,
-    onClearUpdateBadge: () -> Unit = {},
-    homeScrollConnection: NestedScrollConnection? = null,
-    searchScrollConnection: NestedScrollConnection? = null,
-    onlineSearchSort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
     libraryScrollBehavior: TopAppBarScrollBehavior,
+    disableAnimations: Boolean = false,
 ) {
-    composable(Screens.Home.route) {
-        HomeScreen(
-            navController = navController,
-            viewModel = homeViewModel,
-            headerScrollConnection = homeScrollConnection,
-        )
-    }
     composable(
         Screens.Library.route,
     ) {
         LibraryScreen(navController = navController, scrollBehavior = libraryScrollBehavior)
     }
     composable(Screens.Search.route) {
-        SearchScreen(
-            navController = navController,
-            onSearchClick = {
-                navController.currentBackStackEntry
-                    ?.savedStateHandle
-                    ?.set("openSearch", true)
-            },
-            headerScrollConnection = searchScrollConnection,
-        )
+        LocalSearchTabScreen(navController = navController)
+    }
+    composable(Screens.History.route) {
+        HistoryScreen(navController = navController)
     }
     composable("local_songs") {
         LocalSongScreen(navController)
-    }
-    composable("history") {
-        HistoryScreen(navController)
-    }
-    composable("stats") {
-        StatsScreen(navController)
-    }
-    composable("news") {
-        NewsScreen(navController)
-    }
-    composable(
-        route = "view_news/{newsId}",
-        arguments =
-            listOf(
-                navArgument("newsId") { type = NavType.StringType },
-            ),
-    ) {
-        ViewNewsScreen(navController)
-    }
-    composable(
-        route = "year_in_music?year={year}",
-        arguments =
-            listOf(
-                navArgument("year") {
-                    type = NavType.IntType
-                    defaultValue = -1
-                },
-            ),
-    ) { backStackEntry ->
-        val selectedYear = backStackEntry.arguments?.getInt("year")?.takeIf { it > 0 }
-        YearInMusicScreen(
-            navController = navController,
-            initialYear = selectedYear,
-        )
-    }
-    composable(MusicRecognitionRoute) {
-        MusicRecognitionScreen(navController)
-    }
-    composable(MusicRecognitionDetailsRoute) {
-        MusicRecognitionDetailsScreen(navController)
-    }
-    composable(Screens.MoodAndGenres.route) {
-        MoodAndGenresScreen(navController)
-    }
-    composable("account") {
-        AccountScreen(navController, scrollBehavior)
-    }
-    composable("new_release") {
-        NewReleaseScreen(navController, scrollBehavior)
-    }
-    composable("charts_screen") {
-        ChartsScreen(navController)
-    }
-    composable(
-        route = "browse/{browseId}",
-        arguments =
-            listOf(
-                navArgument("browseId") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        BrowseScreen(
-            navController,
-            scrollBehavior,
-        )
-    }
-    composable(
-        route = OnlineSearchResultRoute,
-        arguments =
-            listOf(
-                navArgument(OnlineSearchResultArgument) {
-                    type = NavType.StringType
-                },
-            ),
-        enterTransition = {
-            if (disableAnimations) {
-                fadeIn(tween(0))
-            } else {
-                fadeIn(tween(250))
-            }
-        },
-        exitTransition = {
-            if (disableAnimations) {
-                fadeOut(tween(0))
-            } else if (targetState.destination.route?.startsWith(OnlineSearchResultRoutePrefix) == true) {
-                fadeOut(tween(200))
-            } else {
-                fadeOut(tween(200)) + slideOutHorizontally { -it / 2 }
-            }
-        },
-        popEnterTransition = {
-            if (disableAnimations) {
-                fadeIn(tween(0))
-            } else if (initialState.destination.route?.startsWith(OnlineSearchResultRoutePrefix) == true) {
-                fadeIn(tween(250))
-            } else {
-                fadeIn(tween(250)) + slideInHorizontally { -it / 2 }
-            }
-        },
-        popExitTransition = {
-            if (disableAnimations) {
-                fadeOut(tween(0))
-            } else {
-                fadeOut(tween(200))
-            }
-        },
-    ) {
-        OnlineSearchResult(
-            navController = navController,
-            searchSort = onlineSearchSort,
-        )
     }
     composable(
         route = "album/{albumId}",
@@ -242,17 +69,6 @@ fun NavGraphBuilder.navigationBuilder(
             ),
     ) {
         AlbumScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = PodcastRoute,
-        arguments =
-            listOf(
-                navArgument("browseId") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        PodcastScreen(navController)
     }
     composable(
         route = "artist/{artistId}",
@@ -288,36 +104,6 @@ fun NavGraphBuilder.navigationBuilder(
         ArtistAlbumsScreen(navController, scrollBehavior)
     }
     composable(
-        route = "artist/{artistId}/items?browseId={browseId}&params={params}",
-        arguments =
-            listOf(
-                navArgument("artistId") {
-                    type = NavType.StringType
-                },
-                navArgument("browseId") {
-                    type = NavType.StringType
-                    nullable = true
-                },
-                navArgument("params") {
-                    type = NavType.StringType
-                    nullable = true
-                },
-            ),
-    ) {
-        ArtistItemsScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = "online_playlist/{playlistId}",
-        arguments =
-            listOf(
-                navArgument("playlistId") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        OnlinePlaylistScreen(navController, scrollBehavior)
-    }
-    composable(
         route = "local_playlist/{playlistId}",
         arguments =
             listOf(
@@ -328,82 +114,8 @@ fun NavGraphBuilder.navigationBuilder(
     ) {
         LocalPlaylistScreen(navController, scrollBehavior)
     }
-    composable(
-        route = "spotify_playlist/{playlistId}",
-        arguments =
-            listOf(
-                navArgument("playlistId") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        SpotifyPlaylistScreen(navController, scrollBehavior)
-    }
-    composable(route = "spotify_liked_songs") {
-        SpotifyLikedSongsScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = "auto_playlist/{playlist}?tab={tab}",
-        arguments =
-            listOf(
-                navArgument("playlist") {
-                    type = NavType.StringType
-                },
-                navArgument("tab") {
-                    type = NavType.StringType
-                    defaultValue = "downloaded"
-                },
-            ),
-    ) {
-        AutoPlaylistScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = "cache_playlist/{playlist}",
-        arguments =
-            listOf(
-                navArgument("playlist") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        CachePlaylistScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = "top_playlist/{top}",
-        arguments =
-            listOf(
-                navArgument("top") {
-                    type = NavType.StringType
-                },
-            ),
-    ) {
-        TopPlaylistScreen(navController, scrollBehavior)
-    }
-    composable(
-        route = "youtube_browse/{browseId}?params={params}",
-        arguments =
-            listOf(
-                navArgument("browseId") {
-                    type = NavType.StringType
-                    nullable = true
-                },
-                navArgument("params") {
-                    type = NavType.StringType
-                    nullable = true
-                },
-            ),
-    ) {
-        YouTubeBrowseScreen(navController)
-    }
     composable("settings") {
-        SettingsScreen(navController, latestVersionName())
-    }
-    composable("settings/account") {
-        AccountSettings(
-            navController = navController,
-            latestVersionName = latestVersionName(),
-            viewModel = homeViewModel,
-        )
+        SettingsScreen(navController)
     }
     composable("settings/hidden_playlists") {
         HiddenPlaylistsScreen(navController)
@@ -423,32 +135,14 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/appearance/lyrics_animations") {
         LyricsAnimationSettings(navController)
     }
-    composable("settings/appearance/theme_creator") {
-        ThemeCreatorScreen(navController)
-    }
-    composable("settings/content") {
-        ContentSettings(navController)
-    }
-    composable("settings/lyrics") {
-        LyricsSettings(navController)
-    }
-    composable("settings/internet") {
-        InternetSettings(navController)
-    }
     composable("settings/player") {
         PlayerSettings(navController)
     }
-    composable("settings/modules") {
-        moe.rukamori.archivetune.ui.screens.settings.ModulesSettings(navController)
-    }
-    composable("settings/canvas") {
-        CanvasSettings(navController)
-    }
-    composable("settings/android_auto") {
-        AndroidAutoSettings(navController)
-    }
     composable("settings/storage") {
         StorageSettings(navController)
+    }
+    composable("settings/lyrics") {
+        BatchLyricsScreen(navController)
     }
     composable("settings/privacy") {
         PrivacySettings(navController)
@@ -456,59 +150,16 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/backup_restore") {
         BackupAndRestore(navController)
     }
-    composable("settings/discord") {
-        DiscordSettings(navController)
-    }
-    composable("settings/integration") {
-        IntegrationScreen(navController)
-    }
-    composable("settings/ai_integration") {
-        AiIntegrationSettings(navController)
-    }
-    composable("settings/music_together") {
-        MusicTogetherScreen(navController)
-    }
-    composable("settings/lastfm") {
-        LastFMSettings(navController)
-    }
-    composable("settings/discord/experimental") {
-        moe.rukamori.archivetune.ui.screens.settings
-            .DiscordExperimental(navController)
-    }
     composable("settings/misc") {
         DebugSettings(navController)
     }
     composable("settings/logcat") {
         LogcatScreen(navController)
     }
-    if (BuildConfig.UPDATER_AVAILABLE) {
-        composable("settings/update") {
-            UpdateScreen(navController, onUpToDate = onClearUpdateBadge)
-        }
-    }
-    composable("settings/changelog") {
-        ChangelogScreen(navController)
-    }
     composable("settings/about") {
         AboutScreen(navController)
     }
     composable("customize_background") {
         CustomizeBackground(navController)
-    }
-    composable(
-        route = "$LOGIN_ROUTE?$LOGIN_URL_ARGUMENT={$LOGIN_URL_ARGUMENT}",
-        arguments =
-            listOf(
-                navArgument(LOGIN_URL_ARGUMENT) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                },
-            ),
-    ) { backStackEntry ->
-        LoginScreen(
-            navController,
-            startUrl = backStackEntry.arguments?.getString(LOGIN_URL_ARGUMENT)?.let(Uri::decode),
-        )
     }
 }

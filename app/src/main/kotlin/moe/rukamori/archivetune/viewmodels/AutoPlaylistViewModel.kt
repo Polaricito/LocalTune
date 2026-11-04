@@ -32,7 +32,8 @@ import moe.rukamori.archivetune.constants.SongSortType
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.extensions.filterExplicit
 import moe.rukamori.archivetune.extensions.toEnum
-import moe.rukamori.archivetune.utils.SyncUtils
+import moe.rukamori.archivetune.library.LibrarySyncTarget
+import moe.rukamori.archivetune.library.RefreshLibraryUseCase
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
 import moe.rukamori.archivetune.utils.reportException
@@ -46,7 +47,7 @@ class AutoPlaylistViewModel
         @ApplicationContext context: Context,
         database: MusicDatabase,
         savedStateHandle: SavedStateHandle,
-        private val syncUtils: SyncUtils,
+        private val refreshLibrary: RefreshLibraryUseCase,
     ) : ViewModel() {
         val playlist = savedStateHandle.get<String>("playlist")!!
 
@@ -94,7 +95,7 @@ class AutoPlaylistViewModel
                 _isRefreshing.value = true
                 try {
                     when (playlist) {
-                        "liked" -> syncUtils.syncLikedSongs()
+                        "liked" -> refreshLibrary(LibrarySyncTarget.LikedSongs)
                         else -> Unit
                     }
                 } catch (e: Exception) {

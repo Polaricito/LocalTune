@@ -20,8 +20,6 @@
     <string name="my_top">Мій топ</string>
     <string name="cached_playlist">Кешовані</string>
     <string name="sync_playlist">Синхронізувати плейліст</string>
-    <string name="sync_disabled">Синхронізація вимкнена</string>
-    <string name="allows_for_sync_witch_youtube">Примітка: Це дозволяє синхронізацію з YouTube Music. Це налаштування НЕ можна змінити пізніше.</string>
     <string name="generating_image">Створення зображення</string>
     <string name="please_wait">Будь ласка, зачекайте</string>
     <string name="cancel">Скасувати</string>
@@ -119,7 +117,6 @@
     <string name="clear_canvas_cache">Очистити кеш Canvas</string>
     <string name="clear_canvas_cache_dialog">Ви впевнені, що хочете очистити весь кеш Canvas?</string>
     <string name="disable">Вимкнути</string>
-    <string name="not_logged_in_youtube">Ви не увійшли в YouTube</string>
     <string name="lyrics_text_size">Розмір тексту пісні</string>
     <string name="resume_autoscroll">Поновити автоматичну прокрутку</string>
     <string name="lyrics_romanize_japanese">Транслітерація текстів пісень японською</string>

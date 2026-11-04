@@ -9,8 +9,6 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" tools:node="remove" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
@@ -40,12 +38,7 @@
         <activity android:name=".MainActivity" tools:node="remove" />
         <activity android:name=".DebugActivity" tools:node="remove" />
         <activity android:name=".RestoreBackupFileActivity" tools:node="remove" />
-        <activity android:name=".discord.DiscordOAuthCallbackActivity" tools:node="remove" />
-        <activity android:name=".musicrecognition.MusicRecognitionTileActionActivity" tools:node="remove" />
-        <activity android:name=".musicrecognition.MusicRecognitionCaptureActivity" tools:node="remove" />
 
-        <service android:name=".musicrecognition.MusicRecognitionTileService" tools:node="remove" />
-        <service android:name=".musicrecognition.BackgroundMusicRecognitionService" tools:node="remove" />
         <service android:name=".aod.AodModeTileService" tools:node="remove" />
         <service android:name=".aod.AodDreamService" tools:node="remove" />
 
@@ -58,9 +51,5 @@
         <receiver android:name=".widget.PlaybackSpotlightWidgetReceiver" tools:node="remove" />
         <receiver android:name=".widget.PlaybackCommandWidgetReceiver" tools:node="remove" />
         <receiver android:name=".widget.ListeningInsightsWidgetReceiver" tools:node="remove" />
-
-        <meta-data
-            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            tools:node="remove" />
     </application>
 </manifest>

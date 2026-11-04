@@ -194,12 +194,6 @@ fun LibrarySongsScreen(
                     selected = filter == SongFilter.LIKED,
                     onClick = { filter = SongFilter.LIKED },
                 )
-                // Downloaded
-                SongSubFilterChip(
-                    label = stringResource(R.string.filter_downloaded),
-                    selected = filter == SongFilter.DOWNLOADED,
-                    onClick = { filter = SongFilter.DOWNLOADED },
-                )
                 // All Songs
                 SongSubFilterChip(
                     label = stringResource(R.string.all_songs),
@@ -419,7 +413,7 @@ fun LibrarySongsScreen(
                     item(key = "songs_empty", contentType = "library_empty_state") {
                         LibraryEmptyState(
                             iconRes = R.drawable.music_note,
-                            actionLabelRes = R.string.search_yt_music,
+                            actionLabelRes = R.string.search_your_library,
                             onAction = openSearch,
                         )
                     }

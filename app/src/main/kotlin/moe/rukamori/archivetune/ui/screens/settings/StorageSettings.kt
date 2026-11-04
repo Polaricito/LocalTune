@@ -70,16 +70,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
-import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.constants.MaxImageCacheSizeKey
-import moe.rukamori.archivetune.constants.MaxSongCacheSizeKey
 import moe.rukamori.archivetune.constants.SmartTrimmerKey
-import moe.rukamori.archivetune.extensions.directorySizeBytes
 import moe.rukamori.archivetune.extensions.tryOrNull
-import moe.rukamori.archivetune.storage.StorageFolderKind
 import moe.rukamori.archivetune.storage.StorageLocationKind
-import moe.rukamori.archivetune.storage.StorageLocationRepository
 import moe.rukamori.archivetune.ui.component.ActionPromptDialog
 import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.component.ListPreference
@@ -107,8 +102,6 @@ fun StorageSettings(
 ) {
     val context = LocalContext.current
     val imageDiskCache = context.imageLoader.diskCache ?: return
-    val playerCache = LocalPlayerConnection.current?.service?.playerCache ?: return
-    val downloadCache = LocalPlayerConnection.current?.service?.downloadCache ?: return
     val screenState by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val storagePickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -127,14 +120,6 @@ fun StorageSettings(
         }
     }
 
-    val downloadCacheDir =
-        remember(context) {
-            StorageLocationRepository.cacheDirectory(context, StorageFolderKind.DOWNLOADS)
-        }
-    val playerCacheDir =
-        remember(context) {
-            StorageLocationRepository.cacheDirectory(context, StorageFolderKind.SONG_CACHE)
-        }
     val cacheSizeValues =
         remember {
             listOf(0, 128, 256, 512, 1024, 2048, 4096, 8192)
@@ -153,17 +138,8 @@ fun StorageSettings(
             key = MaxImageCacheSizeKey,
             defaultValue = 512,
         )
-    val (maxSongCacheSize, onMaxSongCacheSizeChange) =
-        rememberPreference(
-            key = MaxSongCacheSizeKey,
-            defaultValue = 1024,
-        )
-    var clearCacheDialog by remember { mutableStateOf(false) }
-    var clearDownloads by remember { mutableStateOf(false) }
     var clearImageCacheDialog by remember { mutableStateOf(false) }
     var imageCacheSize by remember { mutableLongStateOf(0L) }
-    var playerCacheSize by remember { mutableLongStateOf(0L) }
-    var downloadCacheSize by remember { mutableLongStateOf(0L) }
     val isCacheClearInProgress =
         (screenState as? StorageSettingsScreenState.Success)
             ?.model
@@ -184,22 +160,7 @@ fun StorageSettings(
             },
         label = "imageCacheProgress",
     )
-    val maxSongCacheSizeBytes =
-        if (maxSongCacheSize > 0) {
-            cacheSizeMegabytesToBytes(maxSongCacheSize)
-        } else {
-            0L
-        }
-    val playerCacheProgress by animateFloatAsState(
-        targetValue =
-            if (maxSongCacheSizeBytes > 0) {
-                (playerCacheSize.toFloat() / maxSongCacheSizeBytes).coerceIn(0f, 1f)
-            } else {
-                0f
-            },
-        label = "playerCacheProgress",
-    )
-    val isSmartTrimmerAvailable = maxImageCacheSize != 0 || maxSongCacheSize != 0
+    val isSmartTrimmerAvailable = maxImageCacheSize != 0
 
     LaunchedEffect(isSmartTrimmerAvailable) {
         if (!isSmartTrimmerAvailable && smartTrimmer) onSmartTrimmerChange(false)
@@ -209,39 +170,12 @@ fun StorageSettings(
             viewModel.clearImageCache(showFeedback = false)
         }
     }
-    LaunchedEffect(maxSongCacheSize) {
-        if (maxSongCacheSize == 0) {
-            viewModel.clearSongCache(showFeedback = false)
-        }
-    }
     LaunchedEffect(imageDiskCache, isCacheClearInProgress) {
         if (isCacheClearInProgress) return@LaunchedEffect
         while (isActive) {
             imageCacheSize =
                 withContext(Dispatchers.IO) {
                     tryOrNull { imageDiskCache.size } ?: 0L
-                }
-            delay(StorageRefreshIntervalMillis)
-        }
-    }
-    LaunchedEffect(playerCache, playerCacheDir, isCacheClearInProgress) {
-        if (isCacheClearInProgress) return@LaunchedEffect
-        while (isActive) {
-            playerCacheSize =
-                withContext(Dispatchers.IO) {
-                    val cacheSpace = tryOrNull { playerCache.cacheSpace } ?: 0L
-                    if (cacheSpace == 0L) playerCacheDir.directorySizeBytes() else cacheSpace
-                }
-            delay(StorageRefreshIntervalMillis)
-        }
-    }
-    LaunchedEffect(downloadCache, downloadCacheDir, isCacheClearInProgress) {
-        if (isCacheClearInProgress) return@LaunchedEffect
-        while (isActive) {
-            downloadCacheSize =
-                withContext(Dispatchers.IO) {
-                    val cacheSpace = tryOrNull { downloadCache.cacheSpace } ?: 0L
-                    if (cacheSpace == 0L) downloadCacheDir.directorySizeBytes() else cacheSpace
                 }
             delay(StorageRefreshIntervalMillis)
         }
@@ -294,95 +228,6 @@ fun StorageSettings(
                 onSmartTrimmerChange = onSmartTrimmerChange,
                 onSelectFolder = viewModel::openStorageLocationPicker,
             )
-
-            PreferenceGroup(title = stringResource(R.string.downloaded_songs)) {
-                item {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.clear_all_downloads)) },
-                        description = stringResource(R.string.size_used, formatFileSize(downloadCacheSize)),
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_download),
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = { clearDownloads = true },
-                    )
-                }
-            }
-
-            if (clearDownloads) {
-                ActionPromptDialog(
-                    title = stringResource(R.string.clear_all_downloads),
-                    onDismiss = { clearDownloads = false },
-                    onConfirm = {
-                        viewModel.clearDownloads()
-                        clearDownloads = false
-                    },
-                    onCancel = { clearDownloads = false },
-                    content = {
-                        Text(text = stringResource(R.string.clear_downloads_dialog))
-                    },
-                )
-            }
-
-            PreferenceGroup(title = stringResource(R.string.song_cache)) {
-                item {
-                    ListPreference(
-                        title = { Text(stringResource(R.string.max_song_cache_size)) },
-                        description =
-                            if (maxSongCacheSize == -1) {
-                                stringResource(R.string.size_used, formatFileSize(playerCacheSize))
-                            } else {
-                                stringResource(
-                                    R.string.storage_size_ratio,
-                                    formatFileSize(playerCacheSize),
-                                    formatFileSize(maxSongCacheSizeBytes),
-                                )
-                            },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_music),
-                                contentDescription = null,
-                            )
-                        },
-                        selectedValue = maxSongCacheSize,
-                        values = cacheSizeValuesWithUnlimited,
-                        valueText = {
-                            when (it) {
-                                0 -> stringResource(R.string.disable)
-                                -1 -> stringResource(R.string.unlimited)
-                                else -> formatFileSize(cacheSizeMegabytesToBytes(it))
-                            }
-                        },
-                        onValueSelected = onMaxSongCacheSizeChange,
-                    )
-                }
-                item(visible = maxSongCacheSize > 0) {
-                    CacheUsagePreference(progress = playerCacheProgress)
-                }
-                item {
-                    PreferenceEntry(
-                        title = { Text(stringResource(R.string.clear_song_cache)) },
-                        onClick = { clearCacheDialog = true },
-                    )
-                }
-            }
-
-            if (clearCacheDialog) {
-                ActionPromptDialog(
-                    title = stringResource(R.string.clear_song_cache),
-                    onDismiss = { clearCacheDialog = false },
-                    onConfirm = {
-                        viewModel.clearSongCache()
-                        clearCacheDialog = false
-                    },
-                    onCancel = { clearCacheDialog = false },
-                    content = {
-                        Text(text = stringResource(R.string.clear_song_cache_dialog))
-                    },
-                )
-            }
 
             PreferenceGroup(title = stringResource(R.string.image_cache)) {
                 item {
@@ -563,10 +408,7 @@ private fun StorageFolderPreference(
 private fun StorageMigrationProgressDialog(migration: StorageMigrationUiModel) {
     val progress = migration.percent / 100f
     val progressText =
-        when (migration.phase) {
-            StorageMigrationUiPhase.CACHE -> stringResource(R.string.storage_migration_cache_progress, migration.percent)
-            StorageMigrationUiPhase.DOWNLOADS -> stringResource(R.string.storage_migration_downloads_progress, migration.percent)
-        }
+        stringResource(R.string.storage_migration_cache_progress, migration.percent)
 
     BasicAlertDialog(
         onDismissRequest = {},
@@ -611,12 +453,7 @@ private fun StorageMigrationProgressDialog(migration: StorageMigrationUiModel) {
 private fun StorageCacheClearProgressDialog(cacheClear: StorageCacheClearUiModel) {
     val progress = cacheClear.percent / 100f
     val progressText =
-        when (cacheClear.kind) {
-            StorageCacheClearUiKind.SONGS -> stringResource(R.string.storage_clear_song_cache_progress, cacheClear.percent)
-            StorageCacheClearUiKind.DOWNLOADS -> stringResource(R.string.storage_clear_downloads_progress, cacheClear.percent)
-            StorageCacheClearUiKind.IMAGES -> stringResource(R.string.storage_clear_image_cache_progress, cacheClear.percent)
-            StorageCacheClearUiKind.CANVAS -> stringResource(R.string.storage_clear_canvas_cache_progress, cacheClear.percent)
-        }
+        stringResource(R.string.storage_clear_image_cache_progress, cacheClear.percent)
 
     BasicAlertDialog(
         onDismissRequest = {},

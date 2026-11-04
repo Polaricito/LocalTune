@@ -16,7 +16,6 @@
     <string name="quick_picks">Schnelle Auswahl</string>
     <string name="forgotten_favorites">Vergessene Favoriten</string>
     <string name="keep_listening">Weiterhören</string>
-    <string name="your_youtube_playlists">Deine YouTube-Playlists</string>
     <string name="similar_to">Ähnlich wie</string>
     <string name="new_release_albums">Neue Veröffentlichungsalben</string>
     <string name="integration">Integration</string>
@@ -26,7 +25,6 @@
     <string name="last_week">Letzte Woche</string>
     <string name="most_played_songs">Meistgespielte Songs</string>
     <string name="search">Suche</string>
-    <string name="search_yt_music">YouTube Music durchsuchen</string>
     <string name="search_library">Bibliothek durchsuchen</string>
     <string name="filter_library">Bibliothek</string>
     <string name="filter_liked">Mag ich</string>
@@ -473,7 +471,6 @@
     <string name="custom_order">Individuelle Reinfolge</string>
     <string name="list_view">Listenansicht</string>
     <string name="personal_label">Persönlich</string>
-    <string name="youtube_synced">Mit YouTube synchronisiert</string>
     <string name="options_label">Optionen</string>
     <string name="sort_order_ascending">Aufsteigend</string>
     <string name="sort_order_descending">Absteigend</string>
@@ -715,7 +712,6 @@
     <string name="cast_connected_to">Verbunden mit %1$s</string>
     <string name="cast_available_device">Verfügbares Gerät</string>
     <string name="hidden_playlists">Ausgeblendete Playlists</string>
-    <string name="youtube_channels">YouTube-Kanäle</string>
     <string name="unsaved_account_dialog_cancel">Anmeldung abbrechen</string>
     <string name="unsaved_account_dialog_title">Konto nicht gespeichert</string>
     <string name="add_another_account">Weiteres Konto hinzufügen</string>

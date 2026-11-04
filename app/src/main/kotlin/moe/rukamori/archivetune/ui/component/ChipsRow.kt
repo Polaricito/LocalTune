@@ -51,7 +51,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.ui.screens.OptionStats
 
 @Composable
 fun <E> ChipsRow(
@@ -103,124 +102,6 @@ fun <E> ChipsRow(
             )
 
             Spacer(Modifier.width(8.dp))
-        }
-    }
-}
-
-@SuppressLint("UnusedContentLambdaTargetStateParameter")
-@Composable
-fun <Int> ChoiceChipsRow(
-    chips: List<Pair<Int, String>>,
-    options: List<Pair<OptionStats, String>>,
-    selectedOption: OptionStats,
-    onSelectionChange: (OptionStats) -> Unit,
-    currentValue: Int,
-    onValueUpdate: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-) {
-    var expandIconDegree by remember { mutableFloatStateOf(0f) }
-    val rotationAnimation by animateFloatAsState(
-        targetValue = expandIconDegree,
-        animationSpec = tween(durationMillis = 400),
-        label = "",
-    )
-
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp),
-    ) {
-        var expanded by remember { mutableStateOf(false) }
-
-        Column {
-            AssistChip(
-                onClick = {
-                    expanded = !expanded
-                    expandIconDegree -= 180
-                },
-                label = {
-                    Text(
-                        text =
-                            when (selectedOption) {
-                                OptionStats.WEEKS -> stringResource(id = R.string.weeks)
-                                OptionStats.MONTHS -> stringResource(id = R.string.months)
-                                OptionStats.YEARS -> stringResource(id = R.string.years)
-                                OptionStats.CONTINUOUS -> stringResource(id = R.string.continuous)
-                            },
-                    )
-                },
-                trailingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.expand_more),
-                        contentDescription = null,
-                        modifier = Modifier.graphicsLayer(rotationZ = rotationAnimation),
-                    )
-                },
-                shape = RoundedCornerShape(16.dp),
-                border = null,
-                colors =
-                    AssistChipDefaults.assistChipColors(
-                        containerColor = containerColor,
-                        labelColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-            )
-
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandIn() + fadeIn(),
-                exit = shrinkOut() + fadeOut(),
-            ) {
-                DropdownMenu(
-                    modifier = Modifier.padding(start = 12.dp),
-                    expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                        expandIconDegree -= 180
-                    },
-                ) {
-                    options.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(text = option.second) },
-                            onClick = {
-                                onSelectionChange(option.first)
-                                expandIconDegree -= 180
-                                expanded = false
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        AnimatedContent(
-            targetState = selectedOption,
-            transitionSpec = { slideInHorizontally() + fadeIn() togetherWith slideOutHorizontally() + fadeOut() },
-            label = "",
-        ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-            ) {
-                chips.forEach { (value, label) ->
-                    Spacer(Modifier.width(8.dp))
-
-                    FilterChip(
-                        label = { Text(label) },
-                        selected = currentValue == value,
-                        colors =
-                            FilterChipDefaults.filterChipColors(
-                                containerColor = containerColor,
-                            ),
-                        onClick = { onValueUpdate(value) },
-                        shape = RoundedCornerShape(16.dp),
-                        border = null,
-                    )
-                }
-            }
         }
     }
 }

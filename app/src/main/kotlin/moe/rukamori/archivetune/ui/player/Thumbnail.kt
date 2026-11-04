@@ -89,7 +89,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.canvas.CanvasVideo
 import moe.rukamori.archivetune.constants.BackdropBlurAmountKey
 import moe.rukamori.archivetune.constants.BackdropEnabledKey
 import moe.rukamori.archivetune.constants.CropThumbnailToSquareKey
@@ -416,8 +415,6 @@ fun Thumbnail(
                                                     )
                                                     seekDirection = context.getString(R.string.seek_forward_dynamic, skipAmount / 1000)
                                                 }
-                                                // If a user double-tap skip lands on a new media item, force a centralized Discord sync
-                                                playerConnection.service.forceDiscordSync("thumbnail_double_tap_skip")
 
                                                 showSeekEffect = true
                                             },
@@ -525,8 +522,6 @@ fun Thumbnail(
                                             source = canvasArtwork?.source,
                                             primaryUrl = primaryCanvasUrl,
                                             fallbackUrl = fallbackCanvasUrl,
-                                            isPlaying = isPlaying,
-                                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
                                             modifier = Modifier.fillMaxSize(),
                                         )
                                     }

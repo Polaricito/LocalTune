@@ -33,9 +33,9 @@ class ObserveQueueUseCase @Inject constructor(private val repository: QueueRepos
                 locked = locked || extra.guest, guest = extra.guest, autoplay = autoplay, autoplayAvailable = available,
                 canControlPlayback = extra.canControlPlayback,
                 episodeQueue = playback.entries.firstOrNull { it.current }?.metadata?.isPodcast == true,
-                loadingRecommendations = autoplay && (extra.loading || extra.recommendations.loading),
-                chips = QueueChips(if (autoplay && available) extra.recommendations.chips.map { QueueChipUi(it.id, it.title, it.selected) } else emptyList()),
-                recommendationsFailed = autoplay && extra.recommendations.failed,
+                loadingRecommendations = autoplay && extra.loading,
+                chips = QueueChips(emptyList()),
+                recommendationsFailed = false,
             )
         }
     }

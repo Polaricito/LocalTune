@@ -81,7 +81,6 @@ import moe.rukamori.archivetune.constants.DisableBlurKey
 import moe.rukamori.archivetune.constants.LibraryChipOrderKey
 import moe.rukamori.archivetune.constants.LibraryFilter
 import moe.rukamori.archivetune.constants.PlaylistTagOrderKey
-import moe.rukamori.archivetune.constants.ShowSpotifyPlaylistsKey
 import moe.rukamori.archivetune.constants.ShowTagsInLibraryKey
 import moe.rukamori.archivetune.constants.toLibraryFilterOrder
 import moe.rukamori.archivetune.constants.toPlaylistTagOrder
@@ -100,12 +99,11 @@ fun LibraryScreen(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    val defaultFilter by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
+    val defaultFilter by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.PLAYLISTS)
     val database = LocalDatabase.current
     val (selectedTagIds, onSelectedTagIdsChange) = rememberPlaylistTagFilterState(database)
     val allTags by database.allTags().collectAsState(initial = emptyList())
     val (showTagsInLibrary) = rememberPreference(ShowTagsInLibraryKey, defaultValue = true)
-    val (showSpotifyPlaylists) = rememberPreference(ShowSpotifyPlaylistsKey, defaultValue = false)
     val (disableBlur) = rememberPreference(DisableBlurKey, false)
     val (libraryChipOrderPreference) =
         rememberPreference(
@@ -123,10 +121,8 @@ fun LibraryScreen(
                 .mapNotNull { tagId -> tagsById[tagId] }
         }
     val libraryFilters =
-        remember(showSpotifyPlaylists, libraryChipOrderPreference) {
-            libraryChipOrderPreference
-                .toLibraryFilterOrder()
-                .filter { filter -> showSpotifyPlaylists || filter != LibraryFilter.SPOTIFY }
+        remember(libraryChipOrderPreference) {
+            libraryChipOrderPreference.toLibraryFilterOrder()
         }
 
     if (showTagsManagementDialog) {
@@ -140,7 +136,7 @@ fun LibraryScreen(
             initialPage = libraryFilters.indexOf(defaultFilter).takeIf { it >= 0 } ?: 0,
         ) { libraryFilters.size }
 
-    val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.LIBRARY }
+    val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.PLAYLISTS }
 
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
@@ -197,7 +193,7 @@ fun LibraryScreen(
             val coroutineScope = rememberCoroutineScope()
 
             LaunchedEffect(defaultFilter, libraryFilters) {
-                val selectedFilter = defaultFilter.takeIf { it in libraryFilters } ?: LibraryFilter.LIBRARY
+                val selectedFilter = defaultFilter.takeIf { it in libraryFilters } ?: LibraryFilter.PLAYLISTS
                 val selectedPage = libraryFilters.indexOf(selectedFilter).takeIf { it >= 0 } ?: 0
                 if (pagerState.currentPage != selectedPage) {
                     pagerState.scrollToPage(selectedPage)
@@ -208,19 +204,15 @@ fun LibraryScreen(
             LaunchedEffect(pagerState.currentPage, libraryFilters) {
                 scrollBehavior.state.resetHeightOffset()
                 val targetPage = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
-                val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.LIBRARY }
+                val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.PLAYLISTS }
 
                 // Centering the tab chip scroll alignment
                 val tabWidth =
                     when (targetFilter) {
-                        LibraryFilter.LIBRARY -> 116.dp
                         LibraryFilter.PLAYLISTS -> 132.dp
-                        LibraryFilter.PODCASTS -> 126.dp
-                        LibraryFilter.SPOTIFY -> 168.dp
                         LibraryFilter.SONGS -> 102.dp
                         LibraryFilter.ARTISTS -> 116.dp
                         LibraryFilter.ALBUMS -> 110.dp
-                        else -> 116.dp
                     }
                 val screenWidth = configuration.screenWidthDp.dp
                 val targetOffsetDp = (screenWidth - tabWidth) / 2
@@ -239,33 +231,7 @@ fun LibraryScreen(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
                 ) { page ->
-                when (libraryFilters.getOrElse(page) { LibraryFilter.LIBRARY }) {
-                    LibraryFilter.LIBRARY -> {
-                        LibraryMixScreen(
-                            navController = navController,
-                            filterContent =
-                                if (showTagsInLibrary) {
-                                    {
-                                        PlaylistTagFilterRow(
-                                            tags = orderedTags,
-                                            selectedTagIds = selectedTagIds,
-                                            onSelectedTagIdsChange = onSelectedTagIdsChange,
-                                            onManageTagsClick = { showTagsManagementDialog = true },
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                            selectedTagIds = activeSelectedTagIds,
-                            onTabSelected = { targetFilter ->
-                                coroutineScope.launch {
-                                    val targetPage = libraryFilters.indexOf(targetFilter)
-                                    pagerState.animateScrollToPage(targetPage.takeIf { it >= 0 } ?: 0)
-                                }
-                            },
-                        )
-                    }
-
+                when (libraryFilters.getOrElse(page) { LibraryFilter.PLAYLISTS }) {
                     LibraryFilter.PLAYLISTS -> {
                         LibraryPlaylistsScreen(
                             navController = navController,
@@ -284,14 +250,6 @@ fun LibraryScreen(
                                 },
                             selectedTagIds = activeSelectedTagIds,
                         )
-                    }
-
-                    LibraryFilter.SPOTIFY -> {
-                        LibrarySpotifyPlaylistsScreen(navController = navController)
-                    }
-
-                    LibraryFilter.PODCASTS -> {
-                        LibraryPodcastsScreen(navController = navController)
                     }
 
                     LibraryFilter.SONGS -> {
@@ -347,20 +305,14 @@ fun LibraryScreen(
                         val page = libraryFilters.indexOf(filter)
                         val label =
                             when (filter) {
-                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
                                 LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                                LibraryFilter.PODCASTS -> stringResource(R.string.podcast)
-                                LibraryFilter.SPOTIFY -> stringResource(R.string.spotify_playlists)
                                 LibraryFilter.SONGS -> stringResource(R.string.songs)
                                 LibraryFilter.ARTISTS -> stringResource(R.string.artists)
                                 LibraryFilter.ALBUMS -> stringResource(R.string.albums)
                             }
                         val iconRes =
                             when (filter) {
-                                LibraryFilter.LIBRARY -> R.drawable.graphic_eq
                                 LibraryFilter.PLAYLISTS -> R.drawable.queue_music
-                                LibraryFilter.PODCASTS -> R.drawable.mic
-                                LibraryFilter.SPOTIFY -> R.drawable.spotify
                                 LibraryFilter.SONGS -> R.drawable.music_note
                                 LibraryFilter.ARTISTS -> R.drawable.person
                                 LibraryFilter.ALBUMS -> R.drawable.album

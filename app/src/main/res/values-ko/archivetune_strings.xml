@@ -85,8 +85,6 @@
     <string name="my_top">내가 많이 들은 곡</string>
     <string name="cached_playlist">캐시됨</string>
     <string name="sync_playlist">재생목록 동기화</string>
-    <string name="sync_disabled">동기화 비활성화됨</string>
-    <string name="allows_for_sync_witch_youtube">참고: 이 설정을 활성화하면 YouTube Music과 재생목록이 동기화됩니다. 이 설정은 나중에 변경할 수 없습니다.</string>
     <string name="generating_image">이미지 생성 중</string>
     <string name="please_wait">잠시만 기다려 주세요</string>
     <string name="cancel">취소</string>
@@ -218,7 +216,6 @@
     <string name="clear_canvas_cache">캔버스 캐시 비우기</string>
     <string name="clear_canvas_cache_dialog">캐시된 캔버스 데이터를 모두 삭제하시겠습니까?</string>
     <string name="disable">비활성화</string>
-    <string name="not_logged_in_youtube">YouTube 계정에 로그인되지 않음</string>
     <string name="default_links">지원되는 링크 열기</string>
     <string name="open_app_settings_error">앱 설정을 열 수 없습니다.</string>
     <string name="release_notes">릴리스 노트</string>

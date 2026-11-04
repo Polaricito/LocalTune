@@ -48,20 +48,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.utils.appBarScrollBehavior
 import moe.rukamori.archivetune.ui.utils.backToMain
-import moe.rukamori.archivetune.utils.Updater
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    latestVersionName: String,
-    onClearUpdateBadge: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -74,6 +70,13 @@ fun SettingsScreen(
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
 
+    val legacyWritePermission =
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        } else {
+            null
+        }
+
     val notificationPermission =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.POST_NOTIFICATIONS
@@ -83,7 +86,14 @@ fun SettingsScreen(
 
     var isStorageGranted by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, storagePermission) == PackageManager.PERMISSION_GRANTED,
+            ContextCompat.checkSelfPermission(context, storagePermission) == PackageManager.PERMISSION_GRANTED &&
+                (
+                    legacyWritePermission == null ||
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            legacyWritePermission,
+                        ) == PackageManager.PERMISSION_GRANTED
+                ),
         )
     }
 
@@ -98,7 +108,15 @@ fun SettingsScreen(
         rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
         ) { result ->
-            isStorageGranted = result[storagePermission] == true || isStorageGranted
+            isStorageGranted =
+                ContextCompat.checkSelfPermission(context, storagePermission) == PackageManager.PERMISSION_GRANTED &&
+                    (
+                        legacyWritePermission == null ||
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                legacyWritePermission,
+                            ) == PackageManager.PERMISSION_GRANTED
+                    )
             if (notificationPermission != null) {
                 isNotificationGranted = result[notificationPermission] == true || isNotificationGranted
             }
@@ -106,11 +124,7 @@ fun SettingsScreen(
 
     val scrollBehavior = appBarScrollBehavior()
     val shouldShowPermissionHint = !isStorageGranted || !isNotificationGranted
-    val hasUpdate =
-        BuildConfig.UPDATER_AVAILABLE &&
-            Updater.isUpdateAvailable(latestVersionName, BuildConfig.VERSION_NAME)
-    var isUpdateDismissed by remember { mutableStateOf(false) }
-    val settingsGroups = buildSettingsGroups(navController, isAndroid12OrLater, hasUpdate, context)
+    val settingsGroups = buildSettingsGroups(navController, isAndroid12OrLater, context)
 
     Scaffold(
         modifier =
@@ -163,20 +177,6 @@ fun SettingsScreen(
                     bottom = SettingsDimensions.ScreenBottomPadding,
                 ),
         ) {
-            if (hasUpdate && !isUpdateDismissed) {
-                item(key = "update", contentType = "settings_banner") {
-                    SettingsUpdateBanner(
-                        latestVersion = latestVersionName,
-                        onClick = { navController.navigate("settings/update") },
-                        onDismiss = { isUpdateDismissed = true },
-                        modifier =
-                            Modifier
-                                .padding(horizontal = SettingsDimensions.ScreenHorizontalPadding)
-                                .padding(bottom = SettingsDimensions.SectionSpacing),
-                    )
-                }
-            }
-
             if (shouldShowPermissionHint) {
                 item(key = "permission", contentType = "settings_banner") {
                     SettingsPermissionBanner(
@@ -184,6 +184,14 @@ fun SettingsScreen(
                             val toRequest =
                                 buildList {
                                     if (!isStorageGranted) add(storagePermission)
+                                    if (legacyWritePermission != null &&
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            legacyWritePermission,
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        add(legacyWritePermission)
+                                    }
                                     if (!isNotificationGranted && notificationPermission != null) {
                                         add(notificationPermission)
                                     }

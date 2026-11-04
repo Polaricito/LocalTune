@@ -111,7 +111,6 @@ data class StorageMigrationUiModel(
 
 enum class StorageMigrationUiPhase {
     CACHE,
-    DOWNLOADS,
 }
 
 @Immutable
@@ -121,10 +120,7 @@ data class StorageCacheClearUiModel(
 )
 
 enum class StorageCacheClearUiKind {
-    SONGS,
-    DOWNLOADS,
     IMAGES,
-    CANVAS,
 }
 
 @Immutable
@@ -220,14 +216,6 @@ class StorageSettingsViewModel
                 picker.copy(visible = false)
             }
             selectStorageLocation(optionId)
-        }
-
-        fun clearSongCache(showFeedback: Boolean = true) {
-            clearCache(StorageCacheKind.SONGS, showFeedback)
-        }
-
-        fun clearDownloads(showFeedback: Boolean = true) {
-            clearCache(StorageCacheKind.DOWNLOADS, showFeedback)
         }
 
         fun clearImageCache(showFeedback: Boolean = true) {
@@ -340,7 +328,6 @@ class StorageSettingsViewModel
                 phase =
                     when (phase) {
                         StorageMigrationPhase.CACHE -> StorageMigrationUiPhase.CACHE
-                        StorageMigrationPhase.DOWNLOADS -> StorageMigrationUiPhase.DOWNLOADS
                     },
                 percent = percent.coerceIn(0, 100),
             )
@@ -353,10 +340,7 @@ class StorageSettingsViewModel
 
         private fun StorageCacheKind.toUiKind(): StorageCacheClearUiKind =
             when (this) {
-                StorageCacheKind.SONGS -> StorageCacheClearUiKind.SONGS
-                StorageCacheKind.DOWNLOADS -> StorageCacheClearUiKind.DOWNLOADS
                 StorageCacheKind.IMAGES -> StorageCacheClearUiKind.IMAGES
-                StorageCacheKind.CANVAS -> StorageCacheClearUiKind.CANVAS
             }
     }
 

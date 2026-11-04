@@ -15,7 +15,6 @@
     <string name="quick_picks">Scelte rapide</string>
     <string name="forgotten_favorites">Preferiti dimenticati</string>
     <string name="keep_listening">Continua ad ascoltare</string>
-    <string name="your_youtube_playlists">Le tue playlist di YouTube</string>
     <string name="similar_to">Simile a</string>
     <string name="new_release_albums">Nuovi album in uscita</string>
     <string name="integration">Integrazione</string>
@@ -25,7 +24,6 @@
     <string name="last_week">La settimana scorsa</string>
     <string name="most_played_songs">Canzoni più suonate</string>
     <string name="search">Cerca</string>
-    <string name="search_yt_music">Cerca su YouTube Musica...</string>
     <string name="search_library">Cerca nella libreria…</string>
     <string name="filter_library">Biblioteca</string>
     <string name="filter_liked">Mi è piaciuto</string>

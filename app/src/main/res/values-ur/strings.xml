@@ -17,7 +17,6 @@
     <string name="speed_dial">سپیڈ ڈائل</string>
     <string name="forgotten_favorites">بھولے ہوئے پسندیدہ</string>
     <string name="keep_listening">سنتے رہیے</string>
-    <string name="your_youtube_playlists">آپکے یوٹیوب کے مجموعہ گیت</string>
     <string name="similar_to">اس جیسے</string>
     <string name="new_release_albums">حالِیَہ البمومات</string>
     <string name="integration">انضمام</string>
@@ -27,7 +26,6 @@
     <string name="last_week">پچھلے ہفتے</string>
     <string name="most_played_songs">زیادہ بجائے گئے گیت</string>
     <string name="search">تلاش کریں</string>
-    <string name="search_yt_music">یوٹیوب میوسک پر تلاش کریں</string>
     <string name="search_library">فہرست میں تلاش کریں</string>
     <string name="filter_library">فہرست</string>
     <string name="filter_liked">پسند کردہ</string>
@@ -86,7 +84,6 @@
     <string name="list_view">لسٹ ویو</string>
     <string name="grid_view">گرڈ ویو</string>
     <string name="personal_label">زاتی</string>
-    <string name="youtube_synced">یوٹیوب سے ہم عہد ہوا</string>
     <string name="options_label">انتخاب</string>
     <string name="top_artist_badge">سب سے اوپر کا کلاکار</string>
     <string name="no_artist_yet">اب تک کوئ کلاکار نہیں</string>
@@ -1018,7 +1015,6 @@
     <string name="unsaved_account_dialog_cancel">لاگن منسوخ کریں</string>
     <string name="unsaved_account_dialog_no_thanks">نہیں شکریہ</string>
     <string name="unsaved_account_dialog_save_yes">جی، موجودہ حساب کو حفظ کریں</string>
-    <string name="youtube_channels">YouTube کے چینلات</string>
     <string name="hidden_playlists">پوشیدہ مجموعہ گیت</string>
     <string name="hidden_playlists_description">فہرست میں سے چھپائے گئے مجموعہ گیت ادھر نمودار ہوں گے</string>
     <string name="no_hidden_playlists">کوئ پوشیدہ مجموعہ گیت نہیں</string>

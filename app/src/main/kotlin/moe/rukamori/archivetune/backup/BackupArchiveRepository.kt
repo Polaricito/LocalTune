@@ -47,7 +47,6 @@ class BackupArchiveRepository
         @ApplicationContext private val context: Context,
         private val database: MusicDatabase,
         private val operationCoordinator: BackupOperationCoordinator,
-        private val modules: moe.rukamori.archivetune.modules.ModuleRepository,
     ) {
         suspend fun createBackup(
             uri: Uri,
@@ -58,9 +57,7 @@ class BackupArchiveRepository
                 require(categories.isNotEmpty()) { "At least one backup category is required" }
 
                 val includeSettings = BackupArchiveCategory.SETTINGS in categories
-                val includeAccount = BackupArchiveCategory.ACCOUNT in categories
                 val includeLibrary = BackupArchiveCategory.LIBRARY in categories
-                val settingsExcludedKeys = if (includeAccount) emptySet() else ACCOUNT_PREFERENCE_KEYS
                 val dbFile = context.getDatabasePath(InternalDatabase.DB_NAME)
                 val dbFiles =
                     if (includeLibrary) {
@@ -72,7 +69,7 @@ class BackupArchiveRepository
                         emptyList()
                     }
 
-                val totalUnits = (if (includeSettings) 2 else 0) + (if (includeLibrary) 1 else 0) + dbFiles.size
+                val totalUnits = (if (includeSettings) 1 else 0) + (if (includeLibrary) 1 else 0) + dbFiles.size
                 val unitSpan = 100f / totalUnits.coerceAtLeast(1)
                 var completedUnits = 0
                 var lastProgress: BackupArchiveProgress? = null
@@ -106,11 +103,7 @@ class BackupArchiveRepository
                     if (includeSettings) {
                         emit(BackupArchiveStep.EXPORT_SETTINGS, indeterminate = true)
                         zipStream.putNextEntry(ZipEntry(SETTINGS_XML_FILENAME))
-                        writeSettingsToXml(zipStream, settingsExcludedKeys)
-                        zipStream.closeEntry()
-                        completedUnits++
-                        zipStream.putNextEntry(ZipEntry(moe.rukamori.archivetune.modules.ModuleRepository.BACKUP_ENTRY))
-                        zipStream.write(modules.exportPortable())
+                        writeSettingsToXml(zipStream, emptySet())
                         zipStream.closeEntry()
                         completedUnits++
                     }
@@ -217,47 +210,10 @@ class BackupArchiveRepository
         companion object {
             const val SETTINGS_XML_FILENAME = "settings.xml"
             private const val BUFFER_SIZE = 64 * 1024
-
-            val ACCOUNT_PREFERENCE_KEYS: Set<String> =
-                setOf(
-                    "innerTubeCookie",
-                    "visitorData",
-                    "dataSyncId",
-                    "poToken",
-                    "poTokenGvs",
-                    "poTokenPlayer",
-                    "poTokenSourceUrl",
-                    "webClientPoTokenEnabled",
-                    "accountName",
-                    "accountEmail",
-                    "accountChannelHandle",
-                    "useLoginForBrowse",
-                    "lastfmSession",
-                    "lastfmUsername",
-                    "lastfmProvider",
-                    "lastfmCustomEndpoint",
-                    "lastfmApiKeyOverride",
-                    "lastfmSecretOverride",
-                    "paxsenixApiKey",
-                    "listenbrainz_token",
-                    "discordToken",
-                    "discordUsername",
-                    "discordName",
-                    "proxyUsername",
-                    "proxyPassword",
-                    "spotify_sp_dc",
-                    "spotify_sp_key",
-                    "spotify_access_token",
-                    "spotify_access_token_expires_at",
-                    "spotify_account_name",
-                    "spotify_account_avatar_url",
-                )
         }
     }
 
 enum class BackupArchiveCategory {
     LIBRARY,
-    ACCOUNT,
     SETTINGS,
-    DOWNLOADS,
 }

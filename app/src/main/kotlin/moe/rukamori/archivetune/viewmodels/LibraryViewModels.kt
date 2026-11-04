@@ -10,40 +10,26 @@
 package moe.rukamori.archivetune.viewmodels
 
 import android.content.Context
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.exoplayer.offline.Download
-import com.google.common.collect.ImmutableList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.constants.AiApiKeyKey
-import moe.rukamori.archivetune.constants.AiApiValidationStatus
-import moe.rukamori.archivetune.constants.AiApiValidationStatusKey
-import moe.rukamori.archivetune.constants.AiCustomEndpointKey
-import moe.rukamori.archivetune.constants.AiProvider
-import moe.rukamori.archivetune.constants.AiProviderKey
 import moe.rukamori.archivetune.constants.AlbumFilter
 import moe.rukamori.archivetune.constants.AlbumFilterKey
 import moe.rukamori.archivetune.constants.AlbumSortDescendingKey
@@ -71,39 +57,18 @@ import moe.rukamori.archivetune.constants.SongSortTypeKey
 import moe.rukamori.archivetune.constants.TopSize
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.Playlist
-import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.extensions.filterExplicit
 import moe.rukamori.archivetune.extensions.filterExplicitAlbums
 import moe.rukamori.archivetune.extensions.filterVideo
-import moe.rukamori.archivetune.extensions.reversed
 import moe.rukamori.archivetune.extensions.toEnum
-import moe.rukamori.archivetune.innertube.YouTube
 import moe.rukamori.archivetune.library.LibrarySyncFailure
 import moe.rukamori.archivetune.library.LibrarySyncTarget
-import moe.rukamori.archivetune.library.LibraryTopMix
-import moe.rukamori.archivetune.library.ObserveLibraryTopMixesUseCase
 import moe.rukamori.archivetune.library.RefreshLibraryResult
 import moe.rukamori.archivetune.library.RefreshLibraryUseCase
-import moe.rukamori.archivetune.library.RefreshLibraryTopMixesResult
-import moe.rukamori.archivetune.library.RefreshLibraryTopMixesUseCase
-import moe.rukamori.archivetune.library.TopMixGenerationFailure
-import moe.rukamori.archivetune.models.MediaMetadata
-import moe.rukamori.archivetune.models.toMediaMetadata
-import moe.rukamori.archivetune.playback.DownloadUtil
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.utils.get
-import moe.rukamori.archivetune.utils.isLocalMediaId
-import moe.rukamori.archivetune.utils.reportException
-import java.text.Collator
-import java.time.Duration
-import java.time.LocalDateTime
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
-private const val MOST_PLAYED_ALBUM_WINDOW_MILLIS = 14L * 24L * 60L * 60L * 1000L
-
-@Immutable
+@androidx.compose.runtime.Immutable
 sealed interface LibraryRefreshState {
     data object Loading : LibraryRefreshState
 
@@ -119,10 +84,13 @@ abstract class LibraryRefreshViewModel(
 ) : ViewModel() {
     private val _refreshState = MutableStateFlow<LibraryRefreshState>(LibraryRefreshState.Empty)
     val refreshState = _refreshState.asStateFlow()
+
     @Volatile
     private var refreshJob: Job? = null
+
     @Volatile
     private var activeTarget: LibrarySyncTarget? = null
+
     @Volatile
     private var refreshGeneration = 0L
 
@@ -170,10 +138,8 @@ class LibrarySongsViewModel
     constructor(
         @ApplicationContext context: Context,
         database: MusicDatabase,
-        downloadUtil: DownloadUtil,
         refreshLibrary: RefreshLibraryUseCase,
     ) : LibraryRefreshViewModel(refreshLibrary) {
-
         val allSongs =
             context.dataStore.data
                 .map {
@@ -197,48 +163,6 @@ class LibrarySongsViewModel
                         SongFilter.LIKED -> {
                             database.likedSongs(sortType, descending, hideVideo).map { it.filterExplicit(hideExplicit) }
                         }
-
-                        SongFilter.DOWNLOADED -> {
-                            downloadUtil.downloads.flatMapLatest { downloads ->
-                                database
-                                    .allSongs()
-                                    .flowOn(Dispatchers.IO)
-                                    .map { songs ->
-                                        songs.filter { song: Song ->
-                                            downloads[song.id]?.state == Download.STATE_COMPLETED
-                                        }
-                                    }.map { songs ->
-                                        when (sortType) {
-                                            SongSortType.CREATE_DATE -> {
-                                                songs.sortedBy { song: Song ->
-                                                    downloads[song.id]?.updateTimeMs ?: 0L
-                                                }
-                                            }
-
-                                            SongSortType.NAME -> {
-                                                songs.sortedBy { song: Song -> song.song.title }
-                                            }
-
-                                            SongSortType.ARTIST -> {
-                                                val collator =
-                                                    Collator.getInstance(Locale.getDefault())
-                                                collator.strength = Collator.PRIMARY
-                                                songs.sortedWith(
-                                                    compareBy<Song, String>(collator) { song ->
-                                                        song.artists.joinToString("") { artist -> artist.name }
-                                                    },
-                                                )
-                                            }
-
-                                            SongSortType.PLAY_TIME -> {
-                                                songs.sortedBy { song: Song -> song.song.totalPlayTime }
-                                            }
-                                        }.reversed(descending)
-                                            .filterExplicit(hideExplicit)
-                                            .filterVideo(hideVideo)
-                                    }
-                            }
-                        }
                     }
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -246,7 +170,6 @@ class LibrarySongsViewModel
             when (filter) {
                 SongFilter.LIKED -> refreshLibrary(LibrarySyncTarget.LikedSongs)
                 SongFilter.LIBRARY -> refreshLibrary(LibrarySyncTarget.Songs)
-                SongFilter.DOWNLOADED -> Unit
             }
         }
     }
@@ -259,7 +182,6 @@ class LibraryArtistsViewModel
         database: MusicDatabase,
         refreshLibrary: RefreshLibraryUseCase,
     ) : LibraryRefreshViewModel(refreshLibrary) {
-
         val allArtists =
             context.dataStore.data
                 .map {
@@ -281,27 +203,6 @@ class LibraryArtistsViewModel
                 if (filter == ArtistFilter.LIBRARY) LibrarySyncTarget.All else LibrarySyncTarget.Artists,
             )
         }
-
-        init {
-            viewModelScope.launch(Dispatchers.IO) {
-                allArtists.collect { artists ->
-                    artists
-                        .map { it.artist }
-                        .filter {
-                            it.thumbnailUrl == null || Duration.between(
-                                it.lastUpdateTime,
-                                LocalDateTime.now(),
-                            ) > Duration.ofDays(10)
-                        }.forEach { artist ->
-                            YouTube.artist(artist.id).onSuccess { artistPage ->
-                                database.query {
-                                    update(artist, artistPage)
-                                }
-                            }
-                        }
-                }
-            }
-        }
     }
 
 @HiltViewModel
@@ -310,10 +211,8 @@ class LibraryAlbumsViewModel
     constructor(
         @ApplicationContext context: Context,
         database: MusicDatabase,
-        downloadUtil: DownloadUtil,
         refreshLibrary: RefreshLibraryUseCase,
     ) : LibraryRefreshViewModel(refreshLibrary) {
-
         val allAlbums =
             context.dataStore.data
                 .map {
@@ -329,50 +228,6 @@ class LibraryAlbumsViewModel
                 .flatMapLatest { (filterSort, hideExplicit) ->
                     val (filter, sortType, descending) = filterSort
                     when (filter) {
-                        AlbumFilter.DOWNLOADED -> {
-                            downloadUtil.downloads.flatMapLatest { downloads ->
-                                database
-                                    .allSongs()
-                                    .flowOn(Dispatchers.IO)
-                                    .map { songs ->
-                                        songs
-                                            .filter { song -> downloads[song.id]?.state == Download.STATE_COMPLETED }
-                                            .mapNotNull { it.song.albumId }
-                                            .toSet()
-                                    }.flatMapLatest { downloadedAlbumIds ->
-                                        database
-                                            .albumsByIds(downloadedAlbumIds, sortType, descending)
-                                            .map { albums -> albums.filterExplicitAlbums(hideExplicit) }
-                                    }
-                            }
-                        }
-
-                        AlbumFilter.DOWNLOADED_FULL -> {
-                            downloadUtil.downloads.flatMapLatest { downloads ->
-                                database
-                                    .allSongs()
-                                    .flowOn(Dispatchers.IO)
-                                    .map { songs ->
-                                        songs
-                                            .filter { song -> downloads[song.id]?.state == Download.STATE_COMPLETED }
-                                            .mapNotNull { song -> song.song.albumId?.let { albumId -> albumId to song } }
-                                            .groupBy({ it.first }, { it.second })
-                                            .mapValues { (_, songList) -> songList.size }
-                                    }.flatMapLatest { downloadedCountByAlbum ->
-                                        database
-                                            .albumsByIds(downloadedCountByAlbum.keys, sortType, descending)
-                                            .map { albums ->
-                                                albums
-                                                    .filter { album ->
-                                                        val totalSongsInAlbum = album.album.songCount
-                                                        val downloadedSongsCount = downloadedCountByAlbum[album.album.id] ?: 0
-                                                        totalSongsInAlbum > 0 && downloadedSongsCount >= totalSongsInAlbum
-                                                    }.filterExplicitAlbums(hideExplicit)
-                                            }
-                                    }
-                            }
-                        }
-
                         AlbumFilter.LIBRARY -> {
                             database.albums(sortType, descending).map { it.filterExplicitAlbums(hideExplicit) }
                         }
@@ -387,35 +242,6 @@ class LibraryAlbumsViewModel
             when (filter) {
                 AlbumFilter.LIBRARY -> refreshLibrary(LibrarySyncTarget.All)
                 AlbumFilter.LIKED -> refreshLibrary(LibrarySyncTarget.Albums)
-                AlbumFilter.DOWNLOADED,
-                AlbumFilter.DOWNLOADED_FULL,
-                -> Unit
-            }
-        }
-
-        init {
-            viewModelScope.launch(Dispatchers.IO) {
-                allAlbums.collect { albums ->
-                    albums
-                        .filter {
-                            it.album.songCount == 0
-                        }.forEach { album ->
-                            YouTube
-                                .album(album.id)
-                                .onSuccess { albumPage ->
-                                    database.query {
-                                        update(album.album, albumPage, album.artists)
-                                    }
-                                }.onFailure {
-                                    reportException(it)
-                                    if (it.message?.contains("NOT_FOUND") == true) {
-                                        database.query {
-                                            delete(album.album)
-                                        }
-                                    }
-                                }
-                        }
-                }
             }
         }
     }
@@ -426,7 +252,6 @@ class LibraryPlaylistsViewModel
     constructor(
         @ApplicationContext context: Context,
         private val database: MusicDatabase,
-        private val downloadUtil: DownloadUtil,
         refreshLibrary: RefreshLibraryUseCase,
     ) : LibraryRefreshViewModel(refreshLibrary) {
         val allPlaylists =
@@ -435,35 +260,11 @@ class LibraryPlaylistsViewModel
                     it[PlaylistSortTypeKey].toEnum(PlaylistSortType.CUSTOM) to (
                         it[PlaylistSortDescendingKey]
                             ?: true
-                    )
+                        )
                 }.distinctUntilChanged()
                 .flatMapLatest { (sortType, descending) ->
                     database.playlists(sortType, descending)
                 }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-        val downloadedPlaylistIds =
-            combine(
-                database.allPlaylistSongMapsForDownloads(),
-                downloadUtil.downloads,
-            ) { playlistSongMaps, downloads ->
-                playlistSongMaps
-                    .groupBy { it.playlistId }
-                    .mapNotNull { (playlistId, songMaps) ->
-                        val songIds =
-                            songMaps
-                                .asSequence()
-                                .map { it.songId }
-                                .filterNot { it.isLocalMediaId() }
-                                .distinct()
-                                .toList()
-                        playlistId.takeIf {
-                            songIds.isNotEmpty() &&
-                                songIds.all { songId ->
-                                    downloads[songId]?.state == Download.STATE_COMPLETED
-                                }
-                        }
-                    }.toSet()
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
 
         fun sync() {
             refreshLibrary(LibrarySyncTarget.Playlists)
@@ -521,354 +322,9 @@ class ArtistSongsViewModel
     }
 
 @HiltViewModel
-class LibraryMixViewModel
-    @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
-        private val database: MusicDatabase,
-        refreshLibrary: RefreshLibraryUseCase,
-        observeLibraryTopMixes: ObserveLibraryTopMixesUseCase,
-        private val refreshLibraryTopMixes: RefreshLibraryTopMixesUseCase,
-    ) : LibraryRefreshViewModel(refreshLibrary) {
-        private val _isTopMixRefreshing = MutableStateFlow(false)
-        private val _topMixInitialError = MutableStateFlow<String?>(null)
-        private val _topMixEvents = MutableSharedFlow<String>()
-        val topMixEvents = _topMixEvents.asSharedFlow()
-        private var hasRequestedInitialTopMixGeneration = false
-
-        private val isTopMixAiAvailable =
-            context.dataStore.data
-                .map { prefs ->
-                    val provider = prefs[AiProviderKey].toEnum(AiProvider.NONE)
-                    provider != AiProvider.NONE &&
-                        prefs[AiApiKeyKey].orEmpty().isNotBlank() &&
-                        (provider != AiProvider.CUSTOM || prefs[AiCustomEndpointKey].orEmpty().isNotBlank()) &&
-                        prefs[AiApiValidationStatusKey].toEnum(AiApiValidationStatus.UNKNOWN) != AiApiValidationStatus.FAILED
-                }.distinctUntilChanged()
-                .stateIn(viewModelScope, SharingStarted.Lazily, false)
-
-        private val observedTopMixes =
-            observeLibraryTopMixes()
-                .map<List<LibraryTopMix>, List<LibraryTopMix>?> { it }
-                .catch { throwable ->
-                    if (throwable is CancellationException) throw throwable
-                    reportException(throwable)
-                    _topMixInitialError.value = context.getString(R.string.library_top_mixes_failed)
-                    emit(emptyList())
-                }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-        val topMixesUiState =
-            combine(
-                observedTopMixes,
-                isTopMixAiAvailable,
-                _isTopMixRefreshing,
-                _topMixInitialError,
-            ) { mixes, isAiAvailable, isRefreshing, initialError ->
-                when {
-                    mixes == null -> {
-                        LibraryTopMixesUiState.Loading
-                    }
-
-                    initialError != null && mixes.isEmpty() -> {
-                        LibraryTopMixesUiState.Error(initialError)
-                    }
-
-                    mixes.isNotEmpty() -> {
-                        LibraryTopMixesUiState.Success(
-                            mixes = ImmutableList.copyOf(mixes.map { it.toUiModel() }),
-                            isRefreshing = isRefreshing,
-                        )
-                    }
-
-                    !isAiAvailable -> {
-                        LibraryTopMixesUiState.Empty(
-                            reason = LibraryTopMixEmptyReason.AI_NOT_CONFIGURED,
-                            isRefreshing = isRefreshing,
-                        )
-                    }
-
-                    else -> {
-                        LibraryTopMixesUiState.Empty(
-                            reason = LibraryTopMixEmptyReason.NO_RECENT_HISTORY,
-                            isRefreshing = isRefreshing,
-                        )
-                    }
-                }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryTopMixesUiState.Loading)
-
-        val mostPlayedAlbumUiState =
-            context.dataStore.data
-                .map { it[HideExplicitKey] ?: false }
-                .distinctUntilChanged()
-                .flatMapLatest { hideExplicit ->
-                    database
-                        .mostPlayedAlbums(
-                            fromTimeStamp = System.currentTimeMillis() - MOST_PLAYED_ALBUM_WINDOW_MILLIS,
-                            limit = 10,
-                        ).flatMapLatest { albums ->
-                            val album =
-                                albums
-                                    .filterExplicitAlbums(hideExplicit)
-                                    .firstOrNull()
-                            if (album == null) {
-                                flowOf(MostPlayedAlbumUiState.Empty)
-                            } else {
-                                database.albumWithSongs(album.id).map { albumWithSongs ->
-                                    val songs = albumWithSongs?.songs.orEmpty()
-                                    if (songs.isEmpty()) {
-                                        MostPlayedAlbumUiState.Empty
-                                    } else {
-                                        MostPlayedAlbumUiState.Success(
-                                            album =
-                                                MostPlayedAlbumUiModel(
-                                                    id = album.id,
-                                                    title = album.title,
-                                                    thumbnailUrl = album.thumbnailUrl,
-                                                    trackCount = songs.size,
-                                                    tracks = ImmutableList.copyOf(songs.map { it.toMediaMetadata() }),
-                                                ),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                }.flowOn(Dispatchers.IO)
-                .catch { throwable ->
-                    if (throwable is CancellationException) throw throwable
-                    reportException(throwable)
-                    emit(MostPlayedAlbumUiState.Error(context.getString(R.string.error_unknown)))
-                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MostPlayedAlbumUiState.Loading)
-
-        init {
-            viewModelScope.launch {
-                combine(observedTopMixes, isTopMixAiAvailable) { mixes, isAiAvailable ->
-                    mixes != null && mixes.isEmpty() && isAiAvailable
-                }.distinctUntilChanged()
-                    .collect { shouldGenerate ->
-                        if (shouldGenerate && !hasRequestedInitialTopMixGeneration) {
-                            hasRequestedInitialTopMixGeneration = true
-                            refreshTopMixesInternal(isInitialGeneration = true)
-                        }
-                    }
-            }
-        }
-
-        fun syncAllLibrary() {
-            refreshLibrary(LibrarySyncTarget.All)
-        }
-
-        fun refreshTopMixes() {
-            hasRequestedInitialTopMixGeneration = true
-            refreshTopMixesInternal(isInitialGeneration = false)
-        }
-
-        private fun refreshTopMixesInternal(isInitialGeneration: Boolean) {
-            if (_isTopMixRefreshing.value) return
-            viewModelScope.launch(Dispatchers.IO) {
-                _isTopMixRefreshing.value = true
-                _topMixInitialError.value = null
-                val hasVisibleMixes = observedTopMixes.value.orEmpty().isNotEmpty()
-                try {
-                    when (val result = refreshLibraryTopMixes()) {
-                        RefreshLibraryTopMixesResult.Success -> {
-                            _topMixInitialError.value = null
-                        }
-
-                        is RefreshLibraryTopMixesResult.Failure -> {
-                            result.cause?.let(::reportException)
-                            val message = result.reason.toTopMixMessage(result.cause)
-                            if (!isInitialGeneration && hasVisibleMixes) {
-                                _topMixEvents.emit(message)
-                            } else {
-                                _topMixInitialError.value = message
-                            }
-                        }
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    reportException(e)
-                    val message = TopMixGenerationFailure.AI_REQUEST_FAILED.toTopMixMessage(e)
-                    if (!isInitialGeneration && hasVisibleMixes) {
-                        _topMixEvents.emit(message)
-                    } else {
-                        _topMixInitialError.value = message
-                    }
-                } finally {
-                    _isTopMixRefreshing.value = false
-                }
-            }
-        }
-
-        private fun TopMixGenerationFailure.toTopMixMessage(cause: Throwable?): String =
-            when (this) {
-                TopMixGenerationFailure.AI_NOT_CONFIGURED -> {
-                    context.getString(R.string.library_top_mixes_ai_not_configured_desc)
-                }
-
-                TopMixGenerationFailure.NO_RECENT_HISTORY -> {
-                    context.getString(R.string.library_top_mixes_no_recent_history)
-                }
-
-                TopMixGenerationFailure.NO_VALID_MIXES -> {
-                    context.getString(R.string.library_top_mixes_no_valid_mixes)
-                }
-
-                TopMixGenerationFailure.AI_REQUEST_FAILED -> {
-                    buildString {
-                        append(context.getString(R.string.library_top_mixes_failed))
-                        cause?.localizedMessage?.takeIf(String::isNotBlank)?.let { message ->
-                            append(": ")
-                            append(message)
-                        }
-                    }
-                }
-            }
-
-        val topValue =
-            context.dataStore.data
-                .map { it[TopSize] ?: "50" }
-                .distinctUntilChanged()
-        var artists =
-            database
-                .artistsBookmarked(
-                    ArtistSortType.CREATE_DATE,
-                    true,
-                ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-        var albums =
-            context.dataStore.data
-                .map { it[HideExplicitKey] ?: false }
-                .distinctUntilChanged()
-                .flatMapLatest { hideExplicit ->
-                    database.albumsLiked(AlbumSortType.CREATE_DATE, true).map { it.filterExplicitAlbums(hideExplicit) }
-                }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-        var playlists =
-            context.dataStore.data
-                .map {
-                    it[PlaylistSortTypeKey].toEnum(PlaylistSortType.CUSTOM) to (it[PlaylistSortDescendingKey] ?: true)
-                }.distinctUntilChanged()
-                .flatMapLatest { (sortType, descending) -> database.playlists(sortType, descending) }
-                .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-        init {
-            viewModelScope.launch(Dispatchers.IO) {
-                albums.collect { albums ->
-                    albums
-                        .filter {
-                            it.album.songCount == 0
-                        }.forEach { album ->
-                            YouTube
-                                .album(album.id)
-                                .onSuccess { albumPage ->
-                                    database.query {
-                                        update(album.album, albumPage, album.artists)
-                                    }
-                                }.onFailure {
-                                    reportException(it)
-                                    if (it.message?.contains("NOT_FOUND") == true) {
-                                        database.query {
-                                            delete(album.album)
-                                        }
-                                    }
-                                }
-                        }
-                }
-            }
-            viewModelScope.launch(Dispatchers.IO) {
-                artists.collect { artists ->
-                    artists
-                        .map { it.artist }
-                        .filter {
-                            it.thumbnailUrl == null ||
-                                Duration.between(
-                                    it.lastUpdateTime,
-                                    LocalDateTime.now(),
-                                ) > Duration.ofDays(10)
-                        }.forEach { artist ->
-                            YouTube.artist(artist.id).onSuccess { artistPage ->
-                                database.query {
-                                    update(artist, artistPage)
-                                }
-                            }
-                        }
-                }
-            }
-        }
-    }
-
-@Immutable
-sealed interface LibraryTopMixesUiState {
-    data object Loading : LibraryTopMixesUiState
-
-    @Immutable
-    data class Success(
-        val mixes: ImmutableList<LibraryTopMixUiModel>,
-        val isRefreshing: Boolean,
-    ) : LibraryTopMixesUiState
-
-    @Immutable
-    data class Empty(
-        val reason: LibraryTopMixEmptyReason,
-        val isRefreshing: Boolean,
-    ) : LibraryTopMixesUiState
-
-    @Immutable
-    data class Error(
-        val message: String,
-    ) : LibraryTopMixesUiState
-}
-
-enum class LibraryTopMixEmptyReason {
-    AI_NOT_CONFIGURED,
-    NO_RECENT_HISTORY,
-}
-
-@Immutable
-data class LibraryTopMixUiModel(
-    val id: String,
-    val title: String,
-    val description: String,
-    val tracks: ImmutableList<MediaMetadata>,
-)
-
-private fun LibraryTopMix.toUiModel() =
-    LibraryTopMixUiModel(
-        id = id,
-        title = title,
-        description = description,
-        tracks = ImmutableList.copyOf(tracks),
-    )
-
-@Immutable
-sealed interface MostPlayedAlbumUiState {
-    data object Loading : MostPlayedAlbumUiState
-
-    @Immutable
-    data class Success(
-        val album: MostPlayedAlbumUiModel,
-    ) : MostPlayedAlbumUiState
-
-    data object Empty : MostPlayedAlbumUiState
-
-    @Immutable
-    data class Error(
-        val message: String,
-    ) : MostPlayedAlbumUiState
-}
-
-@Immutable
-data class MostPlayedAlbumUiModel(
-    val id: String,
-    val title: String,
-    val thumbnailUrl: String?,
-    val trackCount: Int,
-    val tracks: ImmutableList<MediaMetadata>,
-)
-
-@HiltViewModel
 class LibraryViewModel
     @Inject
     constructor() : ViewModel() {
-        private val curScreen = mutableStateOf(LibraryFilter.LIBRARY)
+        private val curScreen = mutableStateOf(LibraryFilter.PLAYLISTS)
         val filter: MutableState<LibraryFilter> = curScreen
     }

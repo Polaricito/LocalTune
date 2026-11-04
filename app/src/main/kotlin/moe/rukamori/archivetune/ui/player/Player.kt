@@ -1,6 +1,6 @@
-/*
+﻿/*
  * ArchiveTune (2026)
- * © Rukamori — github.com/rukamori
+ * Â© Rukamori â€” github.com/rukamori
  * GPL-3.0 License | Contributors: see git history
  * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
  */
@@ -128,7 +128,6 @@ import androidx.media3.common.Player.STATE_BUFFERING
 import androidx.media3.common.Player.STATE_ENDED
 import androidx.media3.common.Player.STATE_READY
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.palette.graphics.Palette
@@ -145,14 +144,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import moe.rukamori.archivetune.LocalDownloadUtil
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.canvas.CanvasPlaybackRequest
 import moe.rukamori.archivetune.ui.utils.navigateToAlbum
 import moe.rukamori.archivetune.ui.utils.navigateToArtist
-import moe.rukamori.archivetune.viewmodels.CanvasPlaybackViewModel
-import moe.rukamori.archivetune.viewmodels.CanvasPlaybackState
 import moe.rukamori.archivetune.viewmodels.ImmersivePlayerViewModel
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import moe.rukamori.archivetune.constants.BackdropBlurAmountKey
@@ -189,8 +184,6 @@ import moe.rukamori.archivetune.ui.menu.AddToPlaylistDialog
 import moe.rukamori.archivetune.ui.menu.PlayerMenu
 import moe.rukamori.archivetune.ui.player.immersive.ImmersivePlayerEvent
 import moe.rukamori.archivetune.ui.player.immersive.ImmersivePlayerScreen
-import moe.rukamori.archivetune.ui.screens.LOGIN_ROUTE
-import moe.rukamori.archivetune.ui.screens.buildLoginRoute
 import moe.rukamori.archivetune.ui.screens.settings.DarkMode
 import moe.rukamori.archivetune.ui.theme.PlayerColorExtractor
 import android.widget.Toast
@@ -199,7 +192,6 @@ import com.materialkolor.ktx.toColor
 import moe.rukamori.archivetune.ui.utils.highRes
 import moe.rukamori.archivetune.ui.utils.ShowMediaInfo
 import moe.rukamori.archivetune.ui.utils.YtimgResizePolicy
-import moe.rukamori.archivetune.ui.utils.getNextFallbackUrl
 import moe.rukamori.archivetune.ui.utils.resize
 import moe.rukamori.archivetune.utils.ImageBlurUtils
 import moe.rukamori.archivetune.utils.makeTimeString
@@ -302,7 +294,6 @@ fun BottomSheetPlayer(
     pureBlack: Boolean,
     navigationProximityProvider: () -> Float = { 0f },
     navigationBarMode: NavigationBarMode = NavigationBarMode.CONNECTED,
-    canvasViewModel: CanvasPlaybackViewModel = hiltViewModel(),
     immersivePlayerViewModel: ImmersivePlayerViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -317,8 +308,6 @@ fun BottomSheetPlayer(
         onDispose { immersivePlayerViewModel.unbind(playerConnection) }
     }
     val playbackError by playerConnection.error.collectAsStateWithLifecycle()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
     val retryPlayback =
         remember(playerConnection) {
             {
@@ -329,14 +318,6 @@ fun BottomSheetPlayer(
     val dismissPlaybackError =
         remember(playerConnection) {
             playerConnection::dismissPlaybackError
-        }
-    val navigateToLogin: (String?) -> Unit =
-        remember(navController) {
-            { recoveryUrl ->
-                navController.navigate(buildLoginRoute(recoveryUrl)) {
-                    launchSingleTop = true
-                }
-            }
         }
     val playerDesignStyle by rememberEnumPreference(
         key = PlayerDesignStyleKey,
@@ -449,29 +430,6 @@ fun BottomSheetPlayer(
             isMusicVideo = mediaMetadata?.isMusicVideo ?: false,
         )
     val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.Standard)
-    val canvasState by canvasViewModel.state.collectAsStateWithLifecycle()
-    val canvasRequest = remember(mediaMetadata, playerDesignStyle, aodModeEnabled) {
-        mediaMetadata?.takeIf {
-            !aodModeEnabled &&
-                playerDesignStyle != PlayerDesignStyle.V5 &&
-                playerDesignStyle != PlayerDesignStyle.V7
-        }?.let { metadata ->
-            val country = Locale.getDefault().country
-            CanvasPlaybackRequest(
-                mediaId = metadata.id,
-                title = metadata.title,
-                artist = metadata.artists.firstOrNull()?.name.orEmpty(),
-                storefront = if (country.length == 2) country.lowercase(Locale.ROOT) else "us",
-                requireVertical = false,
-            )
-        }
-    }
-    LaunchedEffect(canvasViewModel, canvasRequest) {
-        canvasViewModel.setRequest(canvasRequest)
-    }
-    DisposableEffect(canvasViewModel) {
-        onDispose { canvasViewModel.setRequest(null) }
-    }
 
     var position by rememberSaveable(mediaMetadata?.id) {
         mutableLongStateOf(playerConnection.player.currentPosition)
@@ -776,10 +734,6 @@ fun BottomSheetPlayer(
                 Pair(tb, ib)
             }
         }
-
-    val download by LocalDownloadUtil.current
-        .getDownload(mediaMetadata?.id ?: "")
-        .collectAsState(initial = null)
 
     val sleepTimerEnabled =
         remember(
@@ -1242,10 +1196,7 @@ fun BottomSheetPlayer(
                 }
             }
 
-        val resolvedCanvas = (canvasState as? CanvasPlaybackState.Success)
-            ?.takeIf { it.request == canvasRequest }
-            ?.video
-        val artworkCanvas = resolvedCanvas
+        val artworkCanvas: CanvasVideo? = null
 
         val controlsContent: @Composable ColumnScope.(MediaMetadata, Boolean) -> Unit = { mediaMetadata, landscape ->
             PlayerControlsContent(
@@ -1978,21 +1929,11 @@ fun BottomSheetPlayer(
     }
 
     val activePlaybackError = playbackError
-    val isRecoveryDestination =
-        currentRoute?.startsWith(LOGIN_ROUTE) == true || currentRoute == "settings/account"
-    if (activePlaybackError != null && !isRecoveryDestination) {
-        val errorInfo = remember(activePlaybackError) { activePlaybackError.toPlaybackErrorInfo() }
-        val loginClick =
-            remember(errorInfo.loginRecoveryUrl, navigateToLogin) {
-                { navigateToLogin(errorInfo.loginRecoveryUrl) }
-            }
-
+    if (activePlaybackError != null) {
         PlaybackErrorDialog(
             error = activePlaybackError,
-            showLoginAction = errorInfo.loginRecoveryUrl != null,
             onRetry = retryPlayback,
             onClose = dismissPlaybackError,
-            onLogin = loginClick,
         )
     }
 }
@@ -2102,11 +2043,6 @@ private fun V8PlayerBackdrop(
                                 scaleY = 1.16f
                                 alpha = 0.66f
                             },
-                    onState = { state ->
-                        if (state is coil3.compose.AsyncImagePainter.State.Error) {
-                            getNextFallbackUrl(currentUrl)?.let { currentUrl = it }
-                        }
-                    },
                 )
             } else if (backdropHasBlur) {
                 BackdropBlurApi30(
@@ -2120,9 +2056,6 @@ private fun V8PlayerBackdrop(
                                 scaleY = 1.16f
                                 alpha = 0.66f
                             },
-                    onError = { failedUrl ->
-                        getNextFallbackUrl(failedUrl)?.let { currentUrl = it }
-                    },
                 )
             } else {
                 AsyncImage(
@@ -2137,11 +2070,6 @@ private fun V8PlayerBackdrop(
                                 scaleY = 1.16f
                                 alpha = 0.66f
                             },
-                    onState = { state ->
-                        if (state is coil3.compose.AsyncImagePainter.State.Error) {
-                            getNextFallbackUrl(currentUrl)?.let { currentUrl = it }
-                        }
-                    },
                 )
             }
         }

@@ -15,7 +15,6 @@
     <string name="speed_dial">הפעלה מהירה</string>
     <string name="forgotten_favorites">מועדפים שנשכחו</string>
     <string name="keep_listening">המשך להאזין</string>
-    <string name="your_youtube_playlists">הפלייליסטים שלך בYouTube</string>
     <string name="similar_to">דומה ל</string>
     <string name="new_release_albums">אלבומים חדשים</string>
     <string name="integration">חיבורים</string>
@@ -25,7 +24,6 @@
     <string name="last_week">שבוע שעבר</string>
     <string name="most_played_songs">השירים המושמעים ביותר</string>
     <string name="search">חיפוש</string>
-    <string name="search_yt_music">חיפוש ב- YouTube Music</string>
     <string name="search_library">חיפוש בספרייה</string>
     <string name="filter_library">ספרייה</string>
     <string name="filter_liked">אהבתי</string>
@@ -84,7 +82,6 @@
     </plurals>
     <string name="grid_view">תצוגת רשת</string>
     <string name="personal_label">אישי</string>
-    <string name="youtube_synced">YouTube מסונכרן</string>
     <string name="options_label">אפשרויות</string>
     <string name="top_artist_badge">אמן מוביל</string>
     <string name="no_artist_yet">אין עדיין אמן</string>
@@ -357,7 +354,6 @@
     <string name="action_like">לייק</string>
     <string name="palette_warm_amber">ענבר</string>
     <string name="palette_mocha">מוקה</string>
-    <string name="youtube_channels">ערוצי YouTube</string>
     <string name="palette_slate">צפחה</string>
     <string name="palette_autumn">סתיו</string>
     <string name="added_to_n_playlists">נוסף ל%d פלייליסטים</string>

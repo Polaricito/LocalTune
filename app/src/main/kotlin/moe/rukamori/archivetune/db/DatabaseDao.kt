@@ -63,14 +63,8 @@ import moe.rukamori.archivetune.db.entities.SongWithStats
 import moe.rukamori.archivetune.db.entities.TagEntity
 import moe.rukamori.archivetune.extensions.reversed
 import moe.rukamori.archivetune.extensions.toSQLiteQuery
-import moe.rukamori.archivetune.innertube.models.PlaylistItem
-import moe.rukamori.archivetune.innertube.models.SongItem
-import moe.rukamori.archivetune.innertube.pages.AlbumPage
-import moe.rukamori.archivetune.innertube.pages.ArtistPage
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.models.toMediaMetadata
-import moe.rukamori.archivetune.ui.utils.YtimgResizePolicy
-import moe.rukamori.archivetune.ui.utils.resize
 import java.text.Collator
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -1949,57 +1943,6 @@ interface DatabaseDao {
     }
 
     @Transaction
-    fun insert(albumPage: AlbumPage) {
-        if (insert(
-                AlbumEntity(
-                    id = albumPage.album.browseId,
-                    playlistId = albumPage.album.playlistId,
-                    title = albumPage.album.title,
-                    year = albumPage.album.year,
-                    thumbnailUrl = albumPage.album.thumbnail,
-                    songCount = albumPage.songs.size,
-                    duration = albumPage.songs.sumOf { song -> song.duration ?: 0 },
-                    explicit = albumPage.album.explicit || albumPage.songs.any { it.explicit },
-                ),
-            ) == -1L
-        ) {
-            return
-        }
-        albumPage.songs
-            .map(SongItem::toMediaMetadata)
-            .onEach(::insert)
-            .onEach {
-                val existingSong = getSongByIdBlocking(it.id)
-                if (existingSong != null) {
-                    update(existingSong, it)
-                }
-            }.mapIndexed { index, song ->
-                SongAlbumMap(
-                    songId = song.id,
-                    albumId = albumPage.album.browseId,
-                    index = index,
-                )
-            }.forEach(::upsert)
-        albumPage.album.artists
-            ?.map { artist ->
-                ArtistEntity(
-                    id =
-                        artist.id ?: artistByName(artist.name)?.id
-                            ?: ArtistEntity.generateArtistId(),
-                    name = artist.name,
-                )
-            }?.onEach(::insert)
-            ?.mapIndexed { index, artist ->
-                AlbumArtistMap(
-                    albumId = albumPage.album.browseId,
-                    artistId = artist.id,
-                    order = index,
-                )
-            }?.forEach(::insert)
-        reconcileLocalAlbum(albumPage.album.browseId)
-    }
-
-    @Transaction
     fun update(
         song: Song,
         mediaMetadata: MediaMetadata,
@@ -2065,107 +2008,6 @@ interface DatabaseDao {
 
     @Update
     fun update(map: PlaylistSongMap)
-
-    @Transaction
-    fun update(
-        artist: ArtistEntity,
-        artistPage: ArtistPage,
-    ) {
-        update(
-            artist.copy(
-                name = artistPage.artist.title,
-                thumbnailUrl =
-                    artistPage.artist.thumbnail?.resize(
-                        width = 1080,
-                        height = 1080,
-                        ytimgResizePolicy = YtimgResizePolicy.PreserveOriginal,
-                    ),
-                lastUpdateTime = LocalDateTime.now(),
-            ),
-        )
-    }
-
-    @Transaction
-    fun update(
-        album: AlbumEntity,
-        albumPage: AlbumPage,
-        artists: List<ArtistEntity>? = emptyList(),
-    ) {
-        update(
-            album.copy(
-                id = albumPage.album.browseId,
-                playlistId = albumPage.album.playlistId,
-                title = albumPage.album.title,
-                year = albumPage.album.year,
-                thumbnailUrl = albumPage.album.thumbnail,
-                songCount = albumPage.songs.size,
-                duration = albumPage.songs.sumOf { song -> song.duration ?: 0 },
-                explicit = albumPage.album.explicit || albumPage.songs.any { it.explicit },
-            ),
-        )
-        clearRemoteAlbumSongs(album.id)
-        albumPage.songs
-            .map(SongItem::toMediaMetadata)
-            .onEach(::insert)
-            .onEach {
-                val existingSong = getSongByIdBlocking(it.id)
-                if (existingSong != null) {
-                    update(existingSong, it)
-                }
-            }.mapIndexed { index, song ->
-                SongAlbumMap(
-                    songId = song.id,
-                    albumId = albumPage.album.browseId,
-                    index = index,
-                )
-            }.forEach(::upsert)
-
-        albumPage.album.artists?.let { artists ->
-            // Recreate album artists
-            albumArtistMaps(album.id).forEach(::delete)
-            artists
-                .map { artist ->
-                    ArtistEntity(
-                        id =
-                            artist.id ?: artistByName(artist.name)?.id
-                                ?: ArtistEntity.generateArtistId(),
-                        name = artist.name,
-                    )
-                }.onEach(::insert)
-                .mapIndexed { index, artist ->
-                    AlbumArtistMap(
-                        albumId = albumPage.album.browseId,
-                        artistId = artist.id,
-                        order = index,
-                    )
-                }.forEach(::insert)
-        }
-        reconcileLocalAlbum(albumPage.album.browseId)
-    }
-
-    @Update
-    fun update(
-        playlistEntity: PlaylistEntity,
-        playlistItem: PlaylistItem,
-    ) {
-        update(
-            playlistEntity.copy(
-                name = playlistItem.title,
-                browseId = playlistItem.id,
-                thumbnailUrl =
-                    if (playlistEntity.hasLocalCustomCover) {
-                        playlistEntity.thumbnailUrl
-                    } else {
-                        playlistItem.thumbnail
-                    },
-                isEditable = playlistItem.isEditable,
-                remoteSongCount = playlistItem.songCountText?.let { Regex("""\d+""").find(it)?.value?.toIntOrNull() },
-                playEndpointParams = playlistItem.playEndpoint?.params,
-                shuffleEndpointParams = playlistItem.shuffleEndpoint?.params,
-                radioEndpointParams = playlistItem.radioEndpoint?.params,
-            ),
-        )
-    }
 
     @Upsert
     fun upsert(map: SongAlbumMap)

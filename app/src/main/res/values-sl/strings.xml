@@ -19,7 +19,6 @@
     <string name="speed_dial">Hitro zavrti</string>
     <string name="forgotten_favorites">Pozabljeni priljubljeni</string>
     <string name="keep_listening">Nadaljuj s poslušanjem</string>
-    <string name="your_youtube_playlists">Vaši YouTube seznami predvajanj</string>
     <string name="similar_to">Podobno</string>
     <string name="new_release_albums">Novo izdani albumi</string>
     <string name="integration">integracija</string>
@@ -29,7 +28,6 @@
     <string name="last_week">Prejšnji teden</string>
     <string name="most_played_songs">Najbolj predvajano</string>
     <string name="search">Iskanje</string>
-    <string name="search_yt_music">Išči YouTube Music</string>
     <string name="search_library">Išči zbirko</string>
     <string name="filter_library">Zbirka</string>
     <string name="filter_liked">Všečkano</string>

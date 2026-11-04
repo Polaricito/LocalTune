@@ -41,16 +41,9 @@ import moe.rukamori.archivetune.extensions.getQueueWindows
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.MusicService.MusicBinder
 import moe.rukamori.archivetune.playback.queues.Queue
-import moe.rukamori.archivetune.canvas.CanvasPlaybackRequest
 import moe.rukamori.archivetune.utils.isLocalMediaId
 import moe.rukamori.archivetune.utils.reportException
 import java.util.Locale
-
-internal enum class CanvasArtworkRefetchResult {
-    Success,
-    Failure,
-    AlreadyRunning,
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerConnection(
@@ -96,16 +89,9 @@ class PlayerConnection(
 
     val error = MutableStateFlow<PlaybackException?>(null)
     private var dismissedPlaybackError: PlaybackException? = null
-    val waitingForNetworkConnection = service.waitingForNetworkConnection
     val queueRestoreCompleted = service.queueRestoreCompleted
 
-    internal val canvasNetworkAllowed = service.canvasPlaybackUseCase.policy
-        .map { it.networkAllowed }
-        .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), false)
 
-    private val canvasArtworkRefetchMutex = Mutex()
-    private val _isCanvasArtworkRefetching = MutableStateFlow(false)
-    internal val isCanvasArtworkRefetching = _isCanvasArtworkRefetching.asStateFlow()
 
     private var metadataExtractionJob: Job? = null
 
@@ -232,10 +218,6 @@ class PlayerConnection(
         service.playQueue(queue)
     }
 
-    fun startRadioSeamlessly() {
-        service.startRadioSeamlessly()
-    }
-
     fun playNext(item: MediaItem) = playNext(listOf(item))
 
     fun playNext(items: List<MediaItem>) {
@@ -259,46 +241,11 @@ class PlayerConnection(
         service.addToQueue(items)
     }
 
-    fun playFromVoiceSearch(query: String) {
-        service.playFromVoiceSearch(query)
-    }
-
     fun toggleLike() {
         service.toggleLike()
     }
 
-    internal suspend fun refetchCanvasArtwork(
-        metadata: MediaMetadata,
-        requireVertical: Boolean,
-    ): CanvasArtworkRefetchResult {
-        if (!canvasArtworkRefetchMutex.tryLock()) return CanvasArtworkRefetchResult.AlreadyRunning
 
-        _isCanvasArtworkRefetching.value = true
-        return try {
-            val country = Locale.getDefault().country
-            val storefront = if (country.length == 2) country.lowercase(Locale.ROOT) else "us"
-            val refreshed = service.canvasPlaybackUseCase.refresh(
-                CanvasPlaybackRequest(
-                    mediaId = metadata.id,
-                    title = metadata.title,
-                    artist = metadata.artists.firstOrNull()?.name.orEmpty(),
-                    storefront = storefront,
-                    requireVertical = requireVertical,
-                ),
-            )
-            if (!refreshed) return CanvasArtworkRefetchResult.Failure
-
-            CanvasArtworkRefetchResult.Success
-        } catch (error: CancellationException) {
-            throw error
-        } catch (error: Exception) {
-            timber.log.Timber.tag("CanvasArtwork").w(error, "Canvas refetch failed for %s", metadata.id)
-            CanvasArtworkRefetchResult.Failure
-        } finally {
-            _isCanvasArtworkRefetching.value = false
-            canvasArtworkRefetchMutex.unlock()
-        }
-    }
 
     fun dismissPlaybackError() {
         dismissedPlaybackError = error.value ?: player.playerError
@@ -306,22 +253,12 @@ class PlayerConnection(
     }
 
     fun seekToNext() {
-        val state = service.togetherSessionState.value as? moe.rukamori.archivetune.together.TogetherSessionState.Joined
-        if (state?.role is moe.rukamori.archivetune.together.TogetherRole.Guest) {
-            service.requestTogetherControl(moe.rukamori.archivetune.together.ControlAction.SkipNext)
-            return
-        }
         player.seekToNext()
         player.prepare()
         player.playWhenReady = true
     }
 
     fun seekToPrevious() {
-        val state = service.togetherSessionState.value as? moe.rukamori.archivetune.together.TogetherSessionState.Joined
-        if (state?.role is moe.rukamori.archivetune.together.TogetherRole.Guest) {
-            service.requestTogetherControl(moe.rukamori.archivetune.together.ControlAction.SkipPrevious)
-            return
-        }
         player.seekToPrevious()
         player.prepare()
         player.playWhenReady = true

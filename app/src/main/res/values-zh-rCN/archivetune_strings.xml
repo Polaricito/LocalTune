@@ -20,8 +20,6 @@
     <string name="my_top">我的排行榜</string>
     <string name="cached_playlist">已缓存</string>
     <string name="sync_playlist">同步播放列表</string>
-    <string name="sync_disabled">同步被禁用</string>
-    <string name="allows_for_sync_witch_youtube">注意：这允许与YouTube Music同步。这在之后是无法更改的。</string>
     <string name="generating_image">生成图像</string>
     <string name="please_wait">请稍候</string>
     <string name="cancel">取消</string>
@@ -99,7 +97,6 @@
     <string name="clear_image_cache_dialog">你确定要清除所有缓存的图片吗？</string>
     <string name="clear_downloads_dialog">你确定要清除所有下载吗？</string>
     <string name="disable">停用</string>
-    <string name="not_logged_in_youtube">未登录YouTube</string>
     <string name="default_links">打开支持链接</string>
     <string name="open_app_settings_error">无法打开应用设置</string>
     <string name="release_notes">发行说明</string>

@@ -78,8 +78,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.backup.ScheduledBackupFrequency
-import moe.rukamori.archivetune.constants.ImportSourcePriorityKey
 import moe.rukamori.archivetune.db.entities.Song
 import moe.rukamori.archivetune.ui.component.DefaultDialog
 import moe.rukamori.archivetune.ui.component.EnumListPreference
@@ -88,7 +88,7 @@ import moe.rukamori.archivetune.ui.component.ListPreference
 import moe.rukamori.archivetune.ui.component.PreferenceEntry
 import moe.rukamori.archivetune.ui.component.PreferenceGroup
 import moe.rukamori.archivetune.ui.component.SwitchPreference
-import moe.rukamori.archivetune.ui.menu.AddToPlaylistDialogOnline
+import moe.rukamori.archivetune.ui.menu.AddToPlaylistDialog
 import moe.rukamori.archivetune.ui.menu.LoadingScreen
 import moe.rukamori.archivetune.ui.utils.backToMain
 import moe.rukamori.archivetune.utils.rememberPreference
@@ -126,9 +126,6 @@ fun BackupAndRestore(
 ) {
     val importedSongs = remember { mutableStateListOf<Song>() }
     var showChoosePlaylistDialogOnline by rememberSaveable { mutableStateOf(false) }
-    var isProgressStarted by rememberSaveable { mutableStateOf(false) }
-    var progressStatus by remember { mutableStateOf("") }
-    var progressPercentage by rememberSaveable { mutableIntStateOf(0) }
     var showBackupOptionsDialog by rememberSaveable { mutableStateOf(false) }
     var showRestoreOptionsDialog by rememberSaveable { mutableStateOf(false) }
     var showRestoreValidationError by rememberSaveable { mutableStateOf(false) }
@@ -140,8 +137,8 @@ fun BackupAndRestore(
     val backupRestoreProgress by viewModel.backupRestoreProgress.collectAsStateWithLifecycle()
     val scheduledBackupState by viewModel.scheduledBackupState.collectAsStateWithLifecycle()
     val exportPlaylistState by viewModel.exportPlaylistState.collectAsStateWithLifecycle()
-    val (importLocalFirst, onImportLocalFirstChange) = rememberPreference(ImportSourcePriorityKey, false)
     val context = LocalContext.current
+    val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -293,25 +290,6 @@ fun BackupAndRestore(
                 onOverwriteChanged = viewModel::onScheduledBackupOverwriteChanged,
             )
 
-            GoogleDriveBackupSection(
-                enabled = backupRestoreProgress == null && !showRestoreOptionsDialog && !showBackupOptionsDialog,
-                onRestoreReady = remember(viewModel, context) {
-                    { uri ->
-                        coroutineScope.launch {
-                            val result = viewModel.validateBackup(context, uri)
-                            if (result.isValid) {
-                                pendingRestoreCategories = result.availableCategories
-                                pendingRestoreUri = uri
-                                showRestoreOptionsDialog = true
-                            } else {
-                                restoreValidationErrorMessage = result.errorMessage ?: context.getString(R.string.restore_corrupted)
-                                showRestoreValidationError = true
-                            }
-                        }
-                    }
-                },
-            )
-
             PreferenceGroup(title = stringResource(R.string.internal_service)) {
                 item {
                     PreferenceEntry(
@@ -328,35 +306,6 @@ fun BackupAndRestore(
                         description = stringResource(R.string.restore_select_backup),
                         icon = { Icon(painterResource(R.drawable.restore), null) },
                         onClick = { restoreLauncher.launch(arrayOf("application/octet-stream", "application/zip")) },
-                    )
-                }
-
-                item {
-                    ListPreference(
-                        title = { Text(stringResource(R.string.import_priority_setting_title)) },
-                        description = stringResource(R.string.import_priority_setting_desc),
-                        icon = { Icon(painterResource(R.drawable.playlist_import), null) },
-                        selectedValue = importLocalFirst,
-                        values = listOf(true, false),
-                        valueText = { localFirst ->
-                            stringResource(
-                                if (localFirst) {
-                                    R.string.import_priority_local_first
-                                } else {
-                                    R.string.import_priority_youtube_only
-                                },
-                            )
-                        },
-                        valueDescription = { localFirst ->
-                            stringResource(
-                                if (localFirst) {
-                                    R.string.import_priority_local_first_desc
-                                } else {
-                                    R.string.import_priority_youtube_only_desc
-                                },
-                            )
-                        },
-                        onValueSelected = onImportLocalFirstChange,
                     )
                 }
 
@@ -478,36 +427,25 @@ fun BackupAndRestore(
         )
     }
 
-    AddToPlaylistDialogOnline(
+    AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialogOnline,
-        allowSyncing = false,
-        songs = importedSongs,
+        onGetSong = {
+            importedSongs.forEach { database.insert(it.song) }
+            importedSongs.map { it.id }
+        },
         onDismiss = { showChoosePlaylistDialogOnline = false },
-        onProgressStart = { isProgressStarted = it },
-        onPercentageChange = { progressPercentage = it },
-        onStatusChange = { progressStatus = it },
     )
-
-    LaunchedEffect(progressPercentage, isProgressStarted) {
-        if (isProgressStarted && progressPercentage == 99) {
-            delay(10_000)
-            if (progressPercentage == 99) {
-                isProgressStarted = false
-                progressPercentage = 0
-            }
-        }
-    }
 
     val isExportingPlaylist = (exportPlaylistState as? ExportPlaylistScreenState.Success)?.isExporting == true
     LoadingScreen(
-        isVisible = backupRestoreProgress != null || isProgressStarted || isExportingPlaylist,
-        value = backupRestoreProgress?.percent ?: progressPercentage,
+        isVisible = backupRestoreProgress != null || isExportingPlaylist,
+        value = backupRestoreProgress?.percent ?: 0,
         title =
             backupRestoreProgress?.title
                 ?: if (isExportingPlaylist) stringResource(R.string.export_playlist_in_progress) else null,
         stepText =
             backupRestoreProgress?.step
-                ?: if (isExportingPlaylist) stringResource(R.string.export_playlist_writing) else progressStatus,
+                ?: if (isExportingPlaylist) stringResource(R.string.export_playlist_writing) else null,
         indeterminate = backupRestoreProgress?.indeterminate ?: isExportingPlaylist,
     )
 }
@@ -821,23 +759,17 @@ private fun BackupOptionsDialog(
             val labelRes =
                 when (category) {
                     BackupCategory.LIBRARY -> R.string.backup_category_library
-                    BackupCategory.ACCOUNT -> R.string.backup_category_account
                     BackupCategory.SETTINGS -> R.string.backup_category_settings
-                    BackupCategory.DOWNLOADS -> R.string.backup_category_downloads
                 }
             val descRes =
                 when (category) {
                     BackupCategory.LIBRARY -> R.string.backup_category_library_desc
-                    BackupCategory.ACCOUNT -> R.string.backup_category_account_desc
                     BackupCategory.SETTINGS -> R.string.backup_category_settings_desc
-                    BackupCategory.DOWNLOADS -> R.string.backup_category_downloads_desc
                 }
             val iconRes =
                 when (category) {
                     BackupCategory.LIBRARY -> R.drawable.library_music
-                    BackupCategory.ACCOUNT -> R.drawable.account
                     BackupCategory.SETTINGS -> R.drawable.settings
-                    BackupCategory.DOWNLOADS -> R.drawable.download
                 }
             Surface(
                 modifier = Modifier.fillMaxWidth(),

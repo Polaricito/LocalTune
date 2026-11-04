@@ -171,10 +171,7 @@ fun LibraryAlbumsScreen(
             ) {
                 var showSortMenu by remember { mutableStateOf(false) }
                 val currentSortLabel =
-                    if (filter == AlbumFilter.DOWNLOADED_FULL) {
-                        stringResource(R.string.filter_downloaded)
-                    } else {
-                        when (sortType) {
+                    when (sortType) {
                             AlbumSortType.CREATE_DATE -> {
                                 if (sortDescending) {
                                     stringResource(
@@ -221,7 +218,6 @@ fun LibraryAlbumsScreen(
                                 stringResource(R.string.most_played_sort)
                             }
                         }
-                    }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -277,19 +273,6 @@ fun LibraryAlbumsScreen(
                                     },
                                 )
                             }
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.filter_downloaded)) },
-                                onClick = {
-                                    filter = AlbumFilter.DOWNLOADED_FULL
-                                    showSortMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.offline),
-                                        contentDescription = null,
-                                    )
-                                },
-                            )
                         }
                     }
 
@@ -502,7 +485,7 @@ fun LibraryAlbumsScreen(
                         ) {
                             LibraryEmptyState(
                                 iconRes = R.drawable.album,
-                                actionLabelRes = R.string.search_yt_music,
+                                actionLabelRes = R.string.search_your_library,
                                 onAction = openSearch,
                             )
                         }
@@ -598,7 +581,7 @@ fun LibraryAlbumsScreen(
                         item(key = "albums_empty", contentType = "library_empty_state") {
                             LibraryEmptyState(
                                 iconRes = R.drawable.album,
-                                actionLabelRes = R.string.search_yt_music,
+                                actionLabelRes = R.string.search_your_library,
                                 onAction = openSearch,
                             )
                         }

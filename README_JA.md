@@ -1,230 +1,137 @@
 <div align="center">
 
-  <img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/icon.png" width="160" height="160" alt="ArchiveTune Logo" style="border-radius: 22%">
-
   <h1>ArchiveTune</h1>
 
   <p align="center">
-    <a href="README.md">
-      <img src="https://img.shields.io/badge/🇺🇸%20English-6366f1?style=for-the-badge&labelColor=1e1e2e" />
-    </a>
-    <a href="README_JA.md">
-      <img src="https://img.shields.io/badge/🇯🇵%20日本語-6366f1?style=for-the-badge&labelColor=1e1e2e" />
-    </a>
+    <a href="README.md">English</a> •
+    <a href="README_JA.md">日本語</a>
   </p>
 
   <p align="center">
-    <strong>AndroidでのYouTube Music体験を再定義。</strong>
+    <strong>Android 向けの完全オフライン音楽プレイヤー。</strong>
     <br />
-    <em>高性能・プライバシー重視・こだわりの機能を多数搭載した、ユーザー体験を本気で考えた音楽プレイヤーです。</em>
+    <em>音楽ファイルもライブラリも歌詞も、すべて端末の中に。</em>
   </p>
 
-  <p align="center">
-    <a href="https://archivetune.miuka.moe"><b>公式サイト</b></a> •
-    <a href="#features"><b>機能</b></a> •
-    <a href="https://archivetune.miuka.moe/privacy"><b>プライバシー</b></a> •
-    <a href="#download-now"><b>ダウンロード</b></a> •
-    <a href="#screenshots"><b>スクリーンショット</b></a> •
-    <a href="https://github.com/rukamori/ArchiveTune/issues/new/choose"><b>サポート</b></a>
-  </p>
-
-  <div align="center">
-    <img src="https://img.shields.io/github/v/release/archivetuneapp/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="最新バージョン" />
-    <img src="https://img.shields.io/github/downloads/archivetuneapp/ArchiveTune/total?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="ダウンロード数" />
-    <img src="https://img.shields.io/github/stars/archivetuneapp/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="スター数" />
-    <img src="https://img.shields.io/github/license/archivetuneapp/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e" alt="ライセンス" />
-    <img src="https://img.shields.io/badge/Architecture-MVVM-6366f1?style=for-the-badge&labelColor=1e1e2e&logo=kotlin" alt="MVVMアーキテクチャ" />
-    <img src="https://img.shields.io/badge/Language-Kotlin-7f52ff?style=for-the-badge&logo=kotlin&color=6366f1&labelColor=1e1e2e" alt="Kotlin言語" />
-    <img src="https://img.shields.io/badge/Toolkit-Jetpack_Compose-4285f4?style=for-the-badge&logo=jetpack-compose&color=6366f1&labelColor=1e1e2e" alt="Jetpack Compose" />
-    <img src="https://img.shields.io/badge/Design-Material_3-000000?style=for-the-badge&logo=material-design&color=6366f1&labelColor=1e1e2e" alt="Material Design 3" />
-    <a href="https://www.virustotal.com/gui/file/176bea37aff02a606d04ff0a61478fabdb0bd079f9e97319645452af420e5d84/detection/f-176bea37aff02a606d04ff0a61478fabdb0bd079f9e97319645452af420e5d84-1778840479" target="_blank"><img src="https://img.shields.io/badge/VirusTotal-SAFE-green?style=for-the-badge&logo=virustotal&logoColor=white&labelColor=1e1e2e&color=5865F2" alt="VirusTotal" /></a>
-    <a href="https://t.me/ArchiveTuneGC"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" /></a>
-    <a href="https://discord.gg/archivetune"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
-  </div>
-  
-  <br />
-
-  <a href="https://trendshift.io/repositories/17521" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/17521" alt="ArchiveTune | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
-  </a>
-</div>
-
-<hr />
-
-**ArchiveTune** は単なるYouTube Musicのラッパーアプリではありません。ゼロから構築された完全カスタムの音楽プレイヤーです。音楽はプライベートであるべき、美しくあるべき、そして思い通りに動くべきだと私たちは考えています。音質にこだわり、快適な操作体験を求めるなら、これが最適です。
-
----
-
-> [!IMPORTANT]  
-> **利用可能地域:** お住まいの地域でYouTube Musicがサポートされていない場合、初回データ取得のために対応地域のVPNまたはプロキシが必要です。
-
----
-
-## 📸 ショーケース
-
-<div align="center">
-
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_1.jpg" alt="ブラウズ" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_2.jpg" alt="ライブ歌詞" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_3.jpg" alt="テーマカスタマイズ" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_4.jpg" alt="統計情報" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_5.jpg" alt="アーティスト" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_6.jpg" alt="アルバム" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_7.jpg" alt="プレイヤー" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_8.jpg" alt="設定" width="30%" />
-
 </div>
 
 ---
 
-## ✨ 機能
+ArchiveTune は Kotlin と Jetpack Compose で作られたローカル音楽プレイヤーです。
+端末に保存されている音楽ファイルを読み取り、Material 3 のモダンな
+インターフェースでライブラリ、プレイリスト、プレイヤー、ウィジェット、
+スリープタイマー、イコライザー、オフライン歌詞を提供します。
 
-<div align="center">
+このアプリには **インターネット権限がありません**。YouTube Music、Spotify、
+Last.fm、ListenBrainz、Discord などのオンラインサービスには接続しません。
+アカウント、ダウンロード、リモートカタログも存在しません。
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>再生</h3>
-        <ul>
-          <li>広告なし再生とバックグラウンド再生対応</li>
-          <li>ログイン後にプレイリスト・いいねした曲・登録チャンネルを表示</li>
-          <li>ローカルファイルおよびローカル音楽の再生対応</li>
-          <li>高速起動と軽量なパフォーマンス</li>
-          <li>プライベートで中断のないリスニング体験</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>オーディオ</h3>
-        <ul>
-          <li>EBU R128 ラウドネス正規化</li>
-          <li>テンポ・ピッチ・再生速度の調整</li>
-          <li>トラック間クロスフェード</li>
-          <li>システムイコライザーおよび空間オーディオ連携</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>歌詞 &amp; 発見</h3>
-        <ul>
-          <li>リアルタイム同期歌詞</li>
-          <li>歌詞翻訳、AIによる歌詞翻訳とローマ字表記</li>
-          <li>周囲の音楽を認識する機能</li>
-          <li>好きなときに確認できるリスニング統計</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>同期 &amp; ソーシャル</h3>
-        <ul>
-          <li>YouTube Musicアカウント連携</li>
-          <li>Last.fm スクロブリング対応</li>
-          <li>ListenBrainz 履歴同期</li>
-          <li>Discord リッチプレゼンス対応</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>インターフェース</h3>
-        <ul>
-          <li>Material 3 デザイン</li>
-          <li>アルバムアートに基づくダイナミックカラー</li>
-          <li>画面サイズに応じたレスポンシブレイアウト</li>
-          <li>クリーンなブラウズ・プレイヤー・アーティスト・アルバム・歌詞画面</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>カスタマイズ</h3>
-        <ul>
-          <li>詳細な再生およびUI設定</li>
-          <li>ジェスチャーのカスタマイズ</li>
-          <li>アニメーションとレイアウトの調整</li>
-          <li>ワークフローに合わせた柔軟な操作性</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-</table>
+## 機能
 
-</div>
+- **ローカルライブラリ** – MediaStore から曲、アルバム、アーティストを読み込みます。
+  増分スキャンとフォルダ選択に対応しています。
+- **ローカルプレイリスト** – 作成、名前変更、並べ替え、非表示、削除ができます。
+  プレイリストのカバーも端末内に保存されます。
+- **再生** – メディアセッションによるバックグラウンド再生、キュー管理、
+  シャッフル、リピート、クロスフェード、ラウドネス正規化、テンポ/ピッチ変更、
+  スリープタイマー、システムイコライザーに対応しています。
+- **完全オフラインの歌詞**:
+  - 音声ファイルのタグに埋め込まれた歌詞を自動で取り込みます。
+  - 曲の隣に `.lrc` ファイルがあればそれを使用します。
+  - 同梱の whisper.cpp エンジンで、任意の曲を端末上で文字起こしできます。
+- **一括歌詞生成** – 設定 →「ローカル歌詞」から、ライブラリ全体または
+  プレイリスト単位で文字起こしできます。既存歌詞の上書きも選択可能です。
+  曲は順番に処理され、進捗表示とキャンセルに対応しています。
+- **`.lrc` ファイル** – 生成した歌詞は `Song.flac` や `Song.mp3` の隣に
+  `Song.lrc` として保存されます（Android 10 以降は MediaStore、それ以前は
+  直接ファイルに書き込みます）。
+- **バックアップと復元** – ローカルデータベースと設定をエクスポート/インポートできます。
+- **外観** – ダイナミックカラー、複数のプレイヤースタイルと背景、
+  ジェスチャーとアニメーションの設定。
+- **ホーム画面ウィジェットと AOD プレイヤー** – ローカル再生状態と連動します。
 
----
+## 歌詞と whisper.cpp
 
-## 📥 ダウンロード
+whisper.cpp は Android NDK と CMake でソースからビルドされ、
+`armeabi-v7a`、`arm64-v8a`、`x86`、`x86_64` の 4 ABI に対応します。
+ネイティブライブラリ名は `libarchivetune_whisper.so` です。
 
-（ダウンロードセクションはリンク構造維持のためそのまま）
+量子化された多言語 `tiny` モデル（`ggml-tiny-q5_1.bin`、約 32 MB）を
+`app/src/main/assets/whisper/` に同梱しています。初回使用時にアプリの
+`noBackupFilesDir` へコピーされ、その後は遅延読み込みされます。
+文字起こしは CPU で最大 4 スレッド、直列実行されます。
 
----
+モデルと whisper.cpp のソースは MIT ライセンスです。全文は
+`app/src/main/assets/whisper/LICENSE.txt` と
+`app/src/main/cpp/whisper.cpp/LICENSE` にあります。
 
-> [!WARNING]  
-> **注意:** 信頼できるダウンロード元は上記のみです。それ以外のサイトからのダウンロードによるリスクについては責任を負いません。
+## 動作環境
 
----
+- Android 8.0（API 26）以上。
+- MediaStore から読み取れる音楽ファイル
+  （Android 13 以降は `READ_MEDIA_AUDIO`、以前は `READ_EXTERNAL_STORAGE`）。
+- Android 9 以下では `.lrc` の書き込みに限り
+  `WRITE_EXTERNAL_STORAGE` を要求します。
 
-## ❓ サポート・質問
-Telegramチャンネルに参加してサポートやディスカッションに参加してください。
+## ビルド
 
----
+必要なもの:
 
-## 🌍 グローバリゼーション
+- JDK 21
+- Android SDK（compile SDK 37）
+- Android NDK `30.0.16248370`
+- CMake `3.22.1`
 
-ArchiveTuneは誰のものでもあります。あなたの地域向けにローカライズを手伝ってください。
+デバッグ APK:
 
----
+```bash
+./gradlew :app:assembleGmsMobileUniversalDebug
+```
 
-### ✨ コントリビューター
-（そのまま）
+universal バリアントは 4 ABI すべてをビルドします。より小さい
+`arm64`、`armeabi`、`x86`、`x86_64` バリアントも利用できます。
 
----
+署名付きリリース APK:
 
-### 🛠️ 開発 & エンジニアリング
-プロジェクトのビルドや貢献に興味がありますか？ArchiveTuneは高性能なKotlinスタックで構築されています。  
-<a href="CONTRIBUTING.md"><b>ビルドと貢献ガイドを見る →</b></a>
+```bash
+./gradlew :app:assembleGmsMobileUniversalRelease
+```
 
----
+リリースと nightly はリポジトリに含まれる自己署名キー
+`app/keystore/release.keystore` を使用します（エイリアス、キーパスワード、
+ストアパスワードはすべて `archivetune`）。同じキーをリポジトリに置くことで
+すべてのビルドが同じ署名になり、既存のインストールを上書き更新できます。
+このキーは秘密情報ではないため、秘密として扱わないでください。
 
-### ⭐ プロジェクトを支援
-ArchiveTuneは無料かつオープンソースです。気に入ったら開発支援をご検討ください！
+## プロジェクト構成
 
----
+- `app/src/main/kotlin/moe/rukamori/archivetune/` – アプリ本体。
+- `app/src/main/cpp/` – CMake、JNI ブリッジ、whisper.cpp のソース。
+- `app/src/main/assets/whisper/` – 同梱モデルとライセンス。
+- `app/src/main/res/` – リソースと翻訳。
+- `fastlane/` – ストア用メタデータ。
 
-## 🤝 謝辞
+## プライバシー
 
-私たちはオープンソースの偉大なプロジェクトに支えられています：
+- `INTERNET` 権限を宣言していません。
+- 分析、クラッシュレポート、広告、トラッキング SDK は含まれていません。
+- アカウント機能やリモート同期はありません。
+- 歌詞、プレイリスト、再生履歴、設定は端末内のデータベースとファイルに
+  保存されます。
 
-- **Metrolist** – ベースフレームワーク  
-- **SimpMusic** – 歌詞API  
-- **BetterLyrics** – 歌詞・アートワークAPI  
-- **Material Color Utilities**  
-- **Read You / Seal** – UIコンポーネント  
-- 翻訳者およびベータテスターの皆様  
+## ライセンス
 
----
+ArchiveTune は **GNU General Public License v3.0** で公開されています。
+全文は [`LICENSE`](LICENSE) を参照してください。
 
-## ⚖️ 法的免責事項
+同梱コンポーネント:
 
-ArchiveTuneは独立したサードパーティクライアントです。
+- whisper.cpp と ggml – MIT License、著作権は ggml authors に帰属します。
+- Whisper `tiny` モデル – MIT License、OpenAI。
 
-- Google LLC および YouTube とは無関係です  
-- YouTubeの技術的保護を回避するものではありません  
-- 公式手段での音楽購入によるアーティスト支援を推奨します  
+ArchiveTune の名称、ロゴ、アプリアイコンは GPLv3 の対象外です。
+非公式フォークは、公式リリースであるかのように表示したり、メンテナーによる
+承認を暗示したりしてはいけません。
 
----
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/archivetuneapp/ArchiveTune/refs/heads/dev/fastlane/metadata/android/en-US/images/ArchiveTuneFull.png" alt="ArchiveTune Banner" style="width: 100%; max-width: 500px;">
-  <p><b>ArchiveTuneで音楽体験が向上したなら、ぜひ⭐をお願いします</b></p>
-  <br />
-  <img src="https://raw.githubusercontent.com/archivetuneapp/ArchiveTune/refs/heads/dev/assets/badge_part.png" alt="ArchiveTune Banner" style="width: 160px">
-</div>
+このプロジェクトに公式の Google Play 掲載はありません。非公式の配布元から
+入手したビルドはサポートされません。

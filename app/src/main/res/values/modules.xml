@@ -105,8 +105,6 @@
     <string name="modules_execution_failed">The provider could not initialize or complete the operation.</string>
     <string name="modules_updates">Updates</string>
     <string name="modules_updates_file">This module was imported from a file. Import a replacement file to update it.</string>
-    <string name="modules_youtube_quality">YouTube audio quality</string>
-    <string name="modules_youtube_quality_description">Applies to YouTube playback and downloads only. Module quality is configured separately in Modules.</string>
     <string name="modules_playback_status">Playback: %1$s</string>
     <string name="modules_initialization">Initialization check</string>
     <string name="modules_last_playback">Last playback attempt</string>

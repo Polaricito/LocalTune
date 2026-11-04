@@ -43,32 +43,12 @@
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
-## Markwon — optional GIF support (android-gif-drawable) not bundled
--dontwarn pl.droidsonroids.gif.**
-
--dontwarn javax.servlet.ServletContainerInitializer
--dontwarn org.conscrypt.Conscrypt$Version
--dontwarn org.conscrypt.Conscrypt
--dontwarn org.conscrypt.ConscryptHostnameVerifier
--dontwarn org.openjsse.javax.net.ssl.SSLParameters
--dontwarn org.openjsse.javax.net.ssl.SSLSocket
--dontwarn org.openjsse.net.ssl.OpenJSSE
--dontwarn org.slf4j.impl.StaticLoggerBinder
-
-## Rules for NewPipeExtractor
--keep class org.schabi.newpipe.extractor.services.youtube.protos.** { *; }
--keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
--keep class org.schabi.newpipe.extractor.** { *; }
--keepclassmembers class org.schabi.newpipe.extractor.** { *; }
--keep class org.mozilla.javascript.** { *; }
--keep class org.mozilla.javascript.engine.** { *; }
--keep class org.mozilla.classfile.ClassFileWriter
--dontwarn org.mozilla.javascript.JavaToJSONConverters
--dontwarn org.mozilla.javascript.tools.**
--keep class javax.script.** { *; }
--dontwarn javax.script.**
--keep class jdk.dynalink.** { *; }
--dontwarn jdk.dynalink.**
+## whisper.cpp (JNI bridge)
+# Native methods are resolved by name from the C++ library.
+-keepclasseswithmembernames class moe.rukamori.archivetune.lyrics.WhisperEngine {
+    native <methods>;
+}
+-keep class moe.rukamori.archivetune.lyrics.WhisperEngine { *; }
 
 ## Essential for reflection/deserialization
 -keepattributes Signature
@@ -142,9 +122,4 @@
 -keep class * extends androidx.glance.appwidget.GlanceAppWidget { *; }
 -keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { *; }
 
-# internal Ktor HTTP Client
--keep class io.ktor.** { *; }
--dontwarn io.ktor.**
-
-# engine HTTP Android/OkHttp Ktor
 -dontwarn kotlinx.coroutines.**

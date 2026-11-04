@@ -30,8 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,12 +42,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -57,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -70,11 +65,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.exoplayer.offline.Download
 import androidx.navigation.NavController
 import com.valentinilk.shimmer.shimmer
 import moe.rukamori.archivetune.LocalDatabase
-import moe.rukamori.archivetune.LocalDownloadUtil
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
@@ -85,12 +78,10 @@ import moe.rukamori.archivetune.extensions.togglePlayPause
 import moe.rukamori.archivetune.playback.queues.LocalAlbumRadio
 import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.component.LocalMenuState
-import moe.rukamori.archivetune.ui.component.MediaDetailAction
 import moe.rukamori.archivetune.ui.component.MediaDetailHero
 import moe.rukamori.archivetune.ui.component.MediaDetailStatePanel
 import moe.rukamori.archivetune.ui.component.NavigationTitle
 import moe.rukamori.archivetune.ui.component.SongListItem
-import moe.rukamori.archivetune.ui.component.YouTubeGridItem
 import moe.rukamori.archivetune.ui.component.shimmer.ButtonPlaceholder
 import moe.rukamori.archivetune.ui.component.shimmer.ListItemPlaceHolder
 import moe.rukamori.archivetune.ui.component.shimmer.ShimmerHost
@@ -98,17 +89,9 @@ import moe.rukamori.archivetune.ui.component.shimmer.TextPlaceholder
 import moe.rukamori.archivetune.ui.menu.AlbumMenu
 import moe.rukamori.archivetune.ui.menu.SelectionSongMenu
 import moe.rukamori.archivetune.ui.menu.SongMenu
-import moe.rukamori.archivetune.ui.menu.YouTubeAlbumMenu
-import moe.rukamori.archivetune.ui.utils.HeaderDownloadItem
-import moe.rukamori.archivetune.ui.utils.HeaderDownloadProgressIndicator
-import moe.rukamori.archivetune.ui.utils.HeaderDownloadState
 import moe.rukamori.archivetune.ui.utils.ItemWrapper
 import moe.rukamori.archivetune.ui.utils.backToMain
-import moe.rukamori.archivetune.ui.utils.headerDownloadState
-import moe.rukamori.archivetune.ui.utils.navigateToAlbum
 import moe.rukamori.archivetune.ui.utils.navigateToArtist
-import moe.rukamori.archivetune.ui.utils.sendAddMissingDownloads
-import moe.rukamori.archivetune.ui.utils.sendRemoveDownloads
 import moe.rukamori.archivetune.utils.makeTimeString
 import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.AlbumUiState
@@ -121,26 +104,19 @@ fun AlbumScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: AlbumViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val menuState = LocalMenuState.current
     val database = LocalDatabase.current
     val haptic = LocalHapticFeedback.current
     val playerConnection = LocalPlayerConnection.current ?: return
-
-    val scope = rememberCoroutineScope()
-    val retry = remember(viewModel) { viewModel::retry }
 
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val albumWithSongs by viewModel.albumWithSongs.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val otherVersions by viewModel.otherVersions.collectAsStateWithLifecycle()
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
 
-    // System bars padding
     val systemBarsTopPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
-
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     val wrappedSongs =
@@ -162,52 +138,6 @@ fun AlbumScreen(
         }
     }
 
-    val downloadUtil = LocalDownloadUtil.current
-    var downloads by remember { mutableStateOf<Map<String, Download>>(emptyMap()) }
-    var downloadState by remember { mutableStateOf<HeaderDownloadState>(HeaderDownloadState.None) }
-    val globalDownloadState = remember(downloads) {
-        val activeDownloads = downloads.values.filter {
-            it.state == Download.STATE_DOWNLOADING ||
-            it.state == Download.STATE_QUEUED ||
-            it.state == Download.STATE_RESTARTING ||
-            it.state == Download.STATE_STOPPED
-        }
-        if (activeDownloads.isEmpty()) {
-            HeaderDownloadState.None
-        } else {
-            var progressTotal = 0f
-            var hasRunning = false
-            var hasPaused = false
-            activeDownloads.forEach { download ->
-                val progress = download.percentDownloaded.takeIf { it >= 0f }?.div(100f) ?: 0f
-                progressTotal += progress.coerceIn(0f, 1f)
-                if (download.state == Download.STATE_STOPPED) {
-                    hasPaused = hasPaused || download.stopReason == 1
-                } else {
-                    hasRunning = true
-                }
-            }
-            HeaderDownloadState.Partial(
-                progress = progressTotal / activeDownloads.size,
-                paused = hasPaused && !hasRunning,
-            )
-        }
-    }
-
-    LaunchedEffect(albumWithSongs) {
-        val songIds = albumWithSongs?.songs?.filterNot { it.song.isLocal }?.map { it.id }.orEmpty()
-        if (songIds.isEmpty()) {
-            downloads = emptyMap()
-            downloadState = HeaderDownloadState.None
-            return@LaunchedEffect
-        }
-        downloadUtil.downloads.collect { currentDownloads ->
-            downloads = currentDownloads
-            downloadState = headerDownloadState(songIds, currentDownloads)
-        }
-    }
-
-    // State for LazyColumn to track scroll
     val lazyListState = rememberLazyListState()
 
     val showTopBarTitle by remember {
@@ -308,107 +238,15 @@ fun AlbumScreen(
                                 update(albumWithSongs.album.toggleLike())
                             }
                         },
-                        additionalPrimaryActions = { contentColor ->
-                            if (!albumWithSongs.album.isLocal && albumWithSongs.songs.any { !it.song.isLocal }) {
-                                MediaDetailAction(
-                                    contentDescription =
-                                        if (downloadState == HeaderDownloadState.Completed) {
-                                            R.string.remove_download
-                                        } else {
-                                            R.string.download
-                                        },
-                                    contentColor = contentColor,
-                                    onClick = {
-                                        when (downloadState) {
-                                            HeaderDownloadState.Completed -> {
-                                                sendRemoveDownloads(
-                                                    context = context,
-                                                    songIds = albumWithSongs.songs.map { it.id },
-                                                )
-                                            }
-
-                                            is HeaderDownloadState.Partial -> {
-                                                sendRemoveDownloads(
-                                                    context = context,
-                                                    songIds = albumWithSongs.songs.map { it.id },
-                                                    downloads = downloads,
-                                                )
-                                            }
-
-                                            HeaderDownloadState.None -> {
-                                                sendAddMissingDownloads(
-                                                    context = context,
-                                                    songs =
-                                                        albumWithSongs.songs.map {
-                                                            HeaderDownloadItem(
-                                                                id = it.id,
-                                                                title = it.song.title,
-                                                            )
-                                                        },
-                                                    downloads = downloads,
-                                                )
-                                                navController.navigate("auto_playlist/downloaded?tab=progress")
-                                            }
-                                        }
-                                    },
-                                ) {
-                                    when (val state = downloadState) {
-                                        HeaderDownloadState.Completed -> {
-                                            Icon(
-                                                painter = painterResource(R.drawable.offline),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(22.dp),
-                                            )
-                                        }
-
-                                        is HeaderDownloadState.Partial -> {
-                                            HeaderDownloadProgressIndicator(
-                                                progress = state.progress,
-                                                paused = state.paused,
-                                                icon = R.drawable.download,
-                                            )
-                                        }
-
-                                        HeaderDownloadState.None -> {
-                                            Icon(
-                                                painter = painterResource(R.drawable.download),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(22.dp),
-                                            )
-                                        }
-                                    }
-                                }
-
-                                MediaDetailAction(
-                                    contentDescription = R.string.download,
-                                    contentColor = contentColor,
-                                    onClick = {
-                                        navController.navigate(
-                                            "auto_playlist/downloaded?tab=progress",
-                                        )
-                                    },
-                                ) {
-                                    val globalProgress = (globalDownloadState as? HeaderDownloadState.Partial)?.progress ?: 0f
-                                    val globalPaused = (globalDownloadState as? HeaderDownloadState.Partial)?.paused ?: false
-                                    HeaderDownloadProgressIndicator(
-                                        progress = globalProgress,
-                                        paused = globalPaused,
-                                        icon = R.drawable.list,
-                                    )
-                                }
-                            }
-                        },
                     )
                 }
 
-                // Songs Section Header
                 item(key = "songs_header") {
                     NavigationTitle(
                         title = stringResource(R.string.songs),
                     )
                 }
 
-                // Songs List
                 itemsIndexed(
                     items = wrappedSongs,
                     key = { _, song -> song.item.id },
@@ -466,45 +304,6 @@ fun AlbumScreen(
                                     },
                                 ),
                     )
-                }
-
-                // Other Versions Section
-                if (otherVersions.isNotEmpty()) {
-                    item(key = "other_versions_header") {
-                        NavigationTitle(
-                            title = stringResource(R.string.other_versions),
-                        )
-                    }
-                    item(key = "other_versions_list") {
-                        LazyRow {
-                            items(
-                                items = otherVersions.distinctBy { it.id },
-                                key = { it.id },
-                            ) { item ->
-                                YouTubeGridItem(
-                                    item = item,
-                                    isActive = mediaMetadata?.album?.id == item.id,
-                                    isPlaying = isPlaying,
-                                    coroutineScope = scope,
-                                    modifier =
-                                        Modifier
-                                            .combinedClickable(
-                                                onClick = { navController.navigateToAlbum(item.id) },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        YouTubeAlbumMenu(
-                                                            albumItem = item,
-                                                            navController = navController,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            ).animateItem(),
-                                )
-                            }
-                        }
-                    }
                 }
             } else {
                 when (val state = uiState) {
@@ -607,7 +406,7 @@ fun AlbumScreen(
                                     ),
                                 iconRes = R.drawable.error,
                                 actionLabel = stringResource(R.string.retry),
-                                onAction = retry,
+                                onAction = viewModel::retry,
                                 modifier =
                                     Modifier
                                         .fillParentMaxSize()
@@ -619,7 +418,6 @@ fun AlbumScreen(
             }
         }
 
-        // Top App Bar
         val topAppBarColors =
             if (transparentAppBar) {
                 TopAppBarDefaults.topAppBarColors(

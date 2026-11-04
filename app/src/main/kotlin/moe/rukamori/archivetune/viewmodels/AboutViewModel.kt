@@ -23,13 +23,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import moe.rukamori.archivetune.BuildConfig
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.about.AboutContributor
-import moe.rukamori.archivetune.about.AboutContributorCollection
 import moe.rukamori.archivetune.about.AboutDependencyLicense
 import moe.rukamori.archivetune.about.AboutDependencyLicenseCollection
 import moe.rukamori.archivetune.about.AboutTranslationContributor
 import moe.rukamori.archivetune.about.AboutTranslationContributorCollection
-import moe.rukamori.archivetune.about.FetchAboutContributorsUseCase
 import moe.rukamori.archivetune.about.FetchAboutDependencyLicensesUseCase
 import moe.rukamori.archivetune.about.FetchAboutTranslationContributorsUseCase
 import moe.rukamori.archivetune.currentBuildHash
@@ -59,8 +56,6 @@ data class AboutUiModel(
     val leadDeveloper: TeamMember,
     val collaborators: TeamMemberCollection,
     val respecters: TeamMemberCollection,
-    val contributorsState: AboutContributorsUiState,
-    val contributorsReadMoreUrl: String,
     val activeDialog: AboutDialog,
     val translationContributorsState: AboutTranslationContributorsUiState,
     val dependencyLicensesState: AboutDependencyLicensesUiState,
@@ -113,20 +108,6 @@ data class AboutLinkCollection private constructor(
 
         fun of(vararg values: AboutLinkUiModel): AboutLinkCollection = AboutLinkCollection(values.toList())
     }
-}
-
-sealed interface AboutContributorsUiState {
-    data object Loading : AboutContributorsUiState
-
-    data class Success(
-        val contributors: AboutContributorUiCollection,
-    ) : AboutContributorsUiState
-
-    data object Empty : AboutContributorsUiState
-
-    data class Error(
-        @StringRes val messageResId: Int,
-    ) : AboutContributorsUiState
 }
 
 enum class AboutDialog {
@@ -206,33 +187,6 @@ data class AboutDependencyLicenseUiCollection private constructor(
     }
 }
 
-@Immutable
-data class AboutContributorUiModel(
-    val login: String,
-    val avatarUrl: String,
-    val profileUrl: String,
-)
-
-@Immutable
-data class AboutContributorUiCollection private constructor(
-    private val values: List<AboutContributorUiModel>,
-) {
-    val size: Int get() = values.size
-    val isEmpty: Boolean get() = values.isEmpty()
-
-    operator fun get(index: Int): AboutContributorUiModel = values[index]
-
-    fun forEach(action: (AboutContributorUiModel) -> Unit) {
-        values.forEach(action)
-    }
-
-    companion object {
-        val Empty = AboutContributorUiCollection(emptyList())
-
-        fun from(values: List<AboutContributorUiModel>): AboutContributorUiCollection = AboutContributorUiCollection(values.toList())
-    }
-}
-
 sealed interface AboutScreenEffect {
     data class OpenUri(
         val uri: String,
@@ -243,7 +197,6 @@ sealed interface AboutScreenEffect {
 class AboutViewModel
     @Inject
     constructor(
-        private val fetchAboutContributors: FetchAboutContributorsUseCase,
         private val fetchTranslationContributors: FetchAboutTranslationContributorsUseCase,
         private val fetchDependencyLicenses: FetchAboutDependencyLicensesUseCase,
     ) : ViewModel() {
@@ -253,22 +206,12 @@ class AboutViewModel
         private val _effects = MutableSharedFlow<AboutScreenEffect>(extraBufferCapacity = 1)
         val effects = _effects.asSharedFlow()
 
-        private var contributorsJob: Job? = null
         private var translationContributorsJob: Job? = null
         private var dependencyLicensesJob: Job? = null
-        private var contributorsState: AboutContributorsUiState = AboutContributorsUiState.Loading
         private var translationContributorsState: AboutTranslationContributorsUiState =
             AboutTranslationContributorsUiState.Loading
         private var dependencyLicensesState: AboutDependencyLicensesUiState = AboutDependencyLicensesUiState.Loading
         private var activeDialog = AboutDialog.NONE
-
-        init {
-            loadContributors()
-        }
-
-        fun retryContributors() {
-            loadContributors(force = true)
-        }
 
         fun openTranslationContributors() {
             activeDialog = AboutDialog.TRANSLATION_CONTRIBUTORS
@@ -298,40 +241,6 @@ class AboutViewModel
         fun openUri(uri: String) {
             if (uri.isBlank()) return
             _effects.tryEmit(AboutScreenEffect.OpenUri(uri))
-        }
-
-        private fun loadContributors(force: Boolean = false) {
-            if (!force && contributorsJob?.isActive == true) return
-            contributorsJob?.cancel()
-            contributorsState = AboutContributorsUiState.Loading
-            updateState()
-            contributorsJob =
-                viewModelScope.launch {
-                    contributorsState =
-                        try {
-                            fetchAboutContributors()
-                                .fold(
-                                    onSuccess = { contributors ->
-                                        val contributorUiModels =
-                                            contributors
-                                                .take(MaxDisplayedContributors)
-                                                .toUiCollection()
-                                        if (contributorUiModels.isEmpty) {
-                                            AboutContributorsUiState.Empty
-                                        } else {
-                                            AboutContributorsUiState.Success(contributorUiModels)
-                                        }
-                                    },
-                                    onFailure = {
-                                        AboutContributorsUiState.Error(R.string.error_unknown)
-                                    },
-                                )
-                        } catch (throwable: Throwable) {
-                            if (throwable is CancellationException) throw throwable
-                            AboutContributorsUiState.Error(R.string.error_unknown)
-                        }
-                    updateState()
-                }
         }
 
         private fun loadTranslationContributors(force: Boolean = false) {
@@ -585,26 +494,9 @@ class AboutViewModel
                                 ),
                         ),
                     ),
-                contributorsState = contributorsState,
-                contributorsReadMoreUrl = ContributorsReadMoreUrl,
                 activeDialog = activeDialog,
                 translationContributorsState = translationContributorsState,
                 dependencyLicensesState = dependencyLicensesState,
-            )
-
-        private fun AboutContributorCollection.toUiCollection(): AboutContributorUiCollection {
-            val contributors = ArrayList<AboutContributorUiModel>(MaxDisplayedContributors)
-            forEach { contributor ->
-                contributors.add(contributor.toUiModel())
-            }
-            return AboutContributorUiCollection.from(contributors)
-        }
-
-        private fun AboutContributor.toUiModel(): AboutContributorUiModel =
-            AboutContributorUiModel(
-                login = login,
-                avatarUrl = avatarUrl,
-                profileUrl = profileUrl,
             )
 
         private fun AboutTranslationContributorCollection.toUiCollection(): AboutTranslationContributorUiCollection {
@@ -637,8 +529,6 @@ class AboutViewModel
             )
 
         private companion object {
-            const val MaxDisplayedContributors = 20
             const val DebugBuildBadge = "DEBUG"
-            const val ContributorsReadMoreUrl = "https://github.com/rukamori/ArchiveTune/graphs/contributors"
         }
     }

@@ -20,8 +20,6 @@
     <string name="my_top">Nghe nhiều nhất</string>
     <string name="cached_playlist">Đã lưu vào bộ đệm</string>
     <string name="sync_playlist">Đồng bộ danh sách phát</string>
-    <string name="sync_disabled">Đã tắt đồng bộ</string>
-    <string name="allows_for_sync_witch_youtube">Lưu ý: Tùy chọn này cho phép đồng bộ với YouTube Music và KHÔNG THỂ thay đổi sau này.</string>
     <string name="generating_image">Đang tạo hình ảnh…</string>
     <string name="please_wait">Vui lòng chờ</string>
     <string name="cancel">Hủy bỏ</string>
@@ -122,7 +120,6 @@
     <string name="clear_image_cache_dialog">Bạn có chắc muốn xóa tất cả bộ đệm ảnh?</string>
     <string name="clear_downloads_dialog">Bạn có chắc muốn xóa tất cả tải xuống?</string>
     <string name="disable">Vô hiệu hóa</string>
-    <string name="not_logged_in_youtube">Chưa đăng nhập vào YouTube</string>
     <string name="default_links">Mở liên kết được hỗ trợ</string>
     <string name="open_app_settings_error">Không thể mở cài đặt ứng dụng</string>
     <string name="release_notes">Ghi chú phát hành</string>
@@ -651,14 +648,7 @@
     <string name="stats_artist_breakdown">Phân tích nghệ sĩ</string>
     <string name="backup_category_downloads">Tải lại bài hát ngoại tuyến</string>
     <string name="backup_category_downloads_desc">Sẽ được tải lại khi khôi phục</string>
-    <string name="import_priority_setting_title">Ưu tiên nguồn nhập</string>
-    <string name="import_priority_setting_desc">Chọn nơi khớp bài hát nhập.</string>
-    <string name="import_priority_local_first">Cục bộ trước</string>
-    <string name="import_priority_local_first_desc">Tìm trong thư viện cục bộ trước, sau đó YouTube Music nếu không tìm thấy.</string>
-    <string name="import_priority_youtube_only">Chỉ YouTube Music</string>
-    <string name="import_priority_youtube_only_desc">Bỏ qua tìm kiếm cục bộ và tìm trực tiếp trên YouTube Music.</string>
     <string name="import_source_local">Thư viện cục bộ</string>
-    <string name="import_source_youtube">YouTube Music</string>
     <string name="import_source_unresolved">Không tìm thấy</string>
     <string name="import_review_title">Xem lại nhập</string>
     <string name="import_review_summary">%1$d cục bộ · %2$d YouTube Music · %3$d chưa khớp</string>
@@ -673,7 +663,6 @@
     <string name="import_filter_unresolved">Chưa khớp</string>
     <string name="import_search_query">Tìm tiêu đề và nghệ sĩ</string>
     <string name="import_search_local">Tìm cục bộ</string>
-    <string name="import_search_youtube">Tìm trên YouTube</string>
     <string name="import_no_search_results">Không tìm thấy bài hát phù hợp.</string>
     <string name="import_matched_to">Khớp với: %1$s — %2$s</string>
     <string name="change_song_source">Thay đổi nguồn</string>

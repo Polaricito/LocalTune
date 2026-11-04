@@ -16,7 +16,6 @@
     <string name="quick_picks">Hızlı seçimler</string>
     <string name="forgotten_favorites">Unutulan favoriler</string>
     <string name="keep_listening">Dinlemeye devam et</string>
-    <string name="your_youtube_playlists">YouTube çalma listeleriniz</string>
     <string name="similar_to">benzer</string>
     <string name="new_release_albums">Yeni çıkan albümler</string>
     <string name="integration">Entegrasyon</string>
@@ -26,7 +25,6 @@
     <string name="last_week">Geçen hafta</string>
     <string name="most_played_songs">En çok çalınan şarkılar</string>
     <string name="search">Ara</string>
-    <string name="search_yt_music">YouTube Müzik\'te ara</string>
     <string name="search_library">Kütüphanede ara</string>
     <string name="filter_library">Kütüphane</string>
     <string name="filter_liked">Beğenilenler</string>
@@ -515,7 +513,6 @@
     <string name="library_top_mixes_no_recent_history">Daha fazla şarkı dinleyin, ardından son dinleme geçmişinizden AI derlemeleri oluşturmak için sayfayı yenileyin.</string>
     <string name="grid_view">Izgara Görünümü</string>
     <string name="personal_label">Kişisel</string>
-    <string name="youtube_synced">YouTube senkronize edildi</string>
     <string name="options_label">Seçenekler</string>
     <string name="top_artist_badge">EN İYİ SANATÇI</string>
     <string name="no_artist_yet">Henüz Sanatçı Yok</string>

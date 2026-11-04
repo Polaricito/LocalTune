@@ -14,7 +14,6 @@
     <string name="quick_picks">精选内容</string>
     <string name="forgotten_favorites">被遗忘的最爱</string>
     <string name="keep_listening">继续收听</string>
-    <string name="your_youtube_playlists">你的YouTube播放列表</string>
     <string name="similar_to">相似内容</string>
     <string name="new_release_albums">新发行专辑</string>
     <string name="integration">关联</string>
@@ -23,7 +22,6 @@
     <string name="this_week">这周</string>
     <string name="last_week">上周</string>
     <string name="search">搜索</string>
-    <string name="search_yt_music">从YT Music中搜索…</string>
     <string name="search_library">从库中搜索…</string>
     <string name="filter_library">媒体库</string>
     <string name="filter_liked">喜欢</string>
@@ -610,7 +608,6 @@
     <string name="list_view">列表视图</string>
     <string name="grid_view">网格视图</string>
     <string name="personal_label">个人</string>
-    <string name="youtube_synced">已同步至 YouTube</string>
     <string name="options_label">选项</string>
     <string name="top_artist_badge">热门艺人</string>
     <string name="no_artist_yet">暂无艺人</string>
@@ -1001,7 +998,6 @@
     <string name="unsaved_account_dialog_cancel">取消登录</string>
     <string name="unsaved_account_dialog_no_thanks">暂不保存</string>
     <string name="unsaved_account_dialog_save_yes">是，保存当前账号</string>
-    <string name="youtube_channels">YouTube 频道</string>
     <string name="hidden_playlists">已隐藏歌单</string>
     <string name="hidden_playlists_description">在音乐库中被隐藏的歌单将在此显示</string>
     <string name="no_hidden_playlists">暂无已隐藏歌单</string>

@@ -16,7 +16,6 @@
     <string name="speed_dial">เมนูลัด</string>
     <string name="forgotten_favorites">เพลงโปรดที่ถูกลืม</string>
     <string name="keep_listening">ฟังต่อ</string>
-    <string name="your_youtube_playlists">เพลย์ลิสต์ YouTube ของคุณ</string>
     <string name="similar_to">คล้ายกับ</string>
     <string name="new_release_albums">อัลบั้มออกใหม่</string>
     <string name="integration">การเชื่อมต่อ</string>
@@ -26,7 +25,6 @@
     <string name="last_week">สัปดาห์ที่แล้ว</string>
     <string name="most_played_songs">เพลงที่ฟังบ่อยที่สุด</string>
     <string name="search">ค้นหา</string>
-    <string name="search_yt_music">ค้นหาบน YouTube Music</string>
     <string name="search_library">ค้นหาในคลังเพลง</string>
     <string name="filter_library">คลังเพลง</string>
     <string name="filter_liked">ถูกใจแล้ว</string>
@@ -83,7 +81,6 @@
     <string name="recently_updated">เพื่งอัพเดท</string>
     <string name="custom_order">จัดเรียงเอง</string>
     <string name="personal_label">ส่วนตัว</string>
-    <string name="youtube_synced">ซิงค์กับ Youtubbe แล้ว</string>
     <string name="options_label">ตัวเลือก</string>
     <string name="top_artist_badge">ศิลปินยอดฮิต</string>
     <string name="no_artist_yet">ยังไม่มีศิลปิน</string>

@@ -7,12 +7,11 @@
 
 package moe.rukamori.archivetune.library
 
-import moe.rukamori.archivetune.utils.LibraryLoginRequiredException
-import moe.rukamori.archivetune.utils.LibrarySyncDisabledException
-import moe.rukamori.archivetune.utils.SyncUtils
-import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import moe.rukamori.archivetune.localmedia.LocalSongScanConfig
+import moe.rukamori.archivetune.localmedia.ScanLocalMusicUseCase
+import timber.log.Timber
 
 enum class LibrarySyncTarget {
     All,
@@ -25,8 +24,6 @@ enum class LibrarySyncTarget {
 }
 
 enum class LibrarySyncFailure {
-    LoginRequired,
-    SyncDisabled,
     RequestFailed,
 }
 
@@ -39,33 +36,15 @@ sealed interface RefreshLibraryResult {
 class RefreshLibraryUseCase
     @Inject
     constructor(
-        private val repository: SyncUtils,
+        private val scanLocalMusic: ScanLocalMusicUseCase,
     ) {
         suspend operator fun invoke(target: LibrarySyncTarget): RefreshLibraryResult =
             try {
-                repository.requireLibrarySyncEnabled()
-                when (target) {
-                    LibrarySyncTarget.All -> repository.performFullSync(propagateFailures = true)
-                    LibrarySyncTarget.LikedSongs -> repository.syncLikedSongs(propagateFailures = true)
-                    LibrarySyncTarget.Songs -> repository.syncLibrarySongs(propagateFailures = true)
-                    LibrarySyncTarget.Artists -> repository.syncArtistsSubscriptions(propagateFailures = true)
-                    LibrarySyncTarget.Albums -> repository.syncLikedAlbums(propagateFailures = true)
-                    LibrarySyncTarget.Playlists -> {
-                        repository.syncSavedPlaylists(propagateFailures = true)
-                        repository.syncAutoSyncPlaylists(propagateFailures = true)
-                    }
-                    LibrarySyncTarget.Podcasts -> repository.syncSavedPodcasts(propagateFailures = true)
-                }
+                scanLocalMusic(LocalSongScanConfig())
                 RefreshLibraryResult.Success
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                Timber.e(e, "Library refresh failed for %s", target)
-                RefreshLibraryResult.Failure(
-                    when (e) {
-                        is LibraryLoginRequiredException -> LibrarySyncFailure.LoginRequired
-                        is LibrarySyncDisabledException -> LibrarySyncFailure.SyncDisabled
-                        else -> LibrarySyncFailure.RequestFailed
-                    },
-                )
+                Timber.e(e, "Local library refresh failed for %s", target)
+                RefreshLibraryResult.Failure(LibrarySyncFailure.RequestFailed)
             }
     }

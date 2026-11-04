@@ -156,8 +156,6 @@
     <string name="my_top">Teratas Saya</string>
     <string name="cached_playlist">Tersimpan di Cache</string>
     <string name="sync_playlist">Sinkronkan playlist</string>
-    <string name="sync_disabled">Sinkronisasi dinonaktifkan</string>
-    <string name="allows_for_sync_witch_youtube">Catatan: Ini memungkinkan sinkronisasi dengan YouTube Music. Ini TIDAK dapat diubah nanti.</string>
     <string name="generating_image">Menghasilkan gambar</string>
     <string name="please_wait">Harap tunggu</string>
     <string name="cancel">Wurung</string>
@@ -291,7 +289,6 @@
     <string name="clear_canvas_cache">Busak cache kanvas</string>
     <string name="clear_canvas_cache_dialog">Apakah Kowe yakin ingin menghapus semua kanvas yang di-cache?</string>
     <string name="disable">Nonaktifkan</string>
-    <string name="not_logged_in_youtube">Belum masuk ke YouTube</string>
     <string name="default_links">Buka Tautan yang Didukung</string>
     <string name="open_app_settings_error">Ora bisa membuka pengaturan aplikasi</string>
     <string name="release_notes">Catatan rilis</string>

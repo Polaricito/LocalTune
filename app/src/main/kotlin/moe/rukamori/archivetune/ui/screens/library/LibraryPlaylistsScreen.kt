@@ -98,14 +98,11 @@ import moe.rukamori.archivetune.constants.PureBlackKey
 import moe.rukamori.archivetune.db.entities.Playlist
 import moe.rukamori.archivetune.extensions.move
 import moe.rukamori.archivetune.extensions.toMediaItem
-import moe.rukamori.archivetune.innertube.models.PlaylistItem
-import moe.rukamori.archivetune.innertube.models.WatchEndpoint
 import moe.rukamori.archivetune.playback.queues.ListQueue
 import moe.rukamori.archivetune.ui.component.CreatePlaylistDialog
 import moe.rukamori.archivetune.ui.component.ItemThumbnail
 import moe.rukamori.archivetune.ui.component.LocalMenuState
 import moe.rukamori.archivetune.ui.menu.PlaylistMenu
-import moe.rukamori.archivetune.ui.menu.YouTubePlaylistMenu
 import moe.rukamori.archivetune.ui.theme.PlayerColorExtractor
 import moe.rukamori.archivetune.utils.rememberEnumPreference
 import moe.rukamori.archivetune.utils.rememberPreference
@@ -136,7 +133,6 @@ fun LibraryPlaylistsScreen(
     val (sortDescending, onSortDescendingChange) = rememberPreference(PlaylistSortDescendingKey, true)
     var locked by rememberPreference(PlaylistEditLockKey, defaultValue = true)
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
-    val downloadedPlaylistIds by viewModel.downloadedPlaylistIds.collectAsStateWithLifecycle()
     val filteredPlaylistIds by database
         .playlistIdsByTags(
             if (selectedTagIds.isEmpty()) emptyList() else selectedTagIds.toList(),
@@ -486,7 +482,6 @@ fun LibraryPlaylistsScreen(
                     ) { playlist ->
                         PlaylistGridCard(
                             playlist = playlist,
-                            isDownloaded = playlist.id in downloadedPlaylistIds,
                             onClick = {
                                 openPlaylist(navController, playlist)
                             },
@@ -544,7 +539,6 @@ fun LibraryPlaylistsScreen(
                         ) {
                             PlaylistListCard(
                                 playlist = playlist,
-                                isDownloaded = playlist.id in downloadedPlaylistIds,
                                 onClick = {
                                     openPlaylist(navController, playlist)
                                 },
@@ -599,11 +593,7 @@ private fun openPlaylist(
     navController: NavController,
     playlist: Playlist,
 ) {
-    if (!playlist.playlist.isEditable && playlist.songCount == 0 && playlist.playlist.remoteSongCount != 0) {
-        navController.navigate("online_playlist/${playlist.playlist.browseId}")
-    } else {
-        navController.navigate("local_playlist/${playlist.id}")
-    }
+    navController.navigate("local_playlist/${playlist.id}")
 }
 
 @Composable
@@ -612,44 +602,11 @@ private fun triggerPlaylistMenu(
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     menuState: moe.rukamori.archivetune.ui.component.MenuState,
 ) {
-    if (playlist.playlist.isEditable || playlist.songCount != 0) {
-        PlaylistMenu(
-            playlist = playlist,
-            coroutineScope = coroutineScope,
-            onDismiss = menuState::dismiss,
-        )
-    } else {
-        playlist.playlist.browseId?.let { browseId ->
-            YouTubePlaylistMenu(
-                playlist =
-                    PlaylistItem(
-                        id = browseId,
-                        title = playlist.playlist.name,
-                        author = null,
-                        songCountText = null,
-                        thumbnail = playlist.thumbnails.getOrNull(0) ?: "",
-                        playEndpoint =
-                            WatchEndpoint(
-                                playlistId = browseId,
-                                params = playlist.playlist.playEndpointParams,
-                            ),
-                        shuffleEndpoint =
-                            WatchEndpoint(
-                                playlistId = browseId,
-                                params = playlist.playlist.shuffleEndpointParams,
-                            ),
-                        radioEndpoint =
-                            WatchEndpoint(
-                                playlistId = "RDAMPL$browseId",
-                                params = playlist.playlist.radioEndpointParams,
-                            ),
-                        isEditable = false,
-                    ),
-                coroutineScope = coroutineScope,
-                onDismiss = menuState::dismiss,
-            )
-        }
-    }
+    PlaylistMenu(
+        playlist = playlist,
+        coroutineScope = coroutineScope,
+        onDismiss = menuState::dismiss,
+    )
 }
 
 @Composable
@@ -740,27 +697,14 @@ fun rememberArtworkCardColor(
 @Composable
 fun PlaylistListCard(
     playlist: Playlist,
-    isDownloaded: Boolean,
     onClick: () -> Unit,
     onPlay: () -> Unit,
     onMenuClick: () -> Unit,
     showDragHandle: Boolean = false,
     dragHandleModifier: Modifier = Modifier,
 ) {
-    val sourceLabel =
-        stringResource(
-            if (playlist.playlist.isEditable) {
-                R.string.personal_label
-            } else {
-                R.string.youtube_synced
-            },
-        )
-    val sourceColor =
-        if (playlist.playlist.isEditable) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.secondary
-        }
+    val sourceLabel = stringResource(R.string.personal_label)
+    val sourceColor = MaterialTheme.colorScheme.primary
     val additionalAction: (@Composable RowScope.() -> Unit)? =
         if (showDragHandle) {
             {
@@ -779,25 +723,14 @@ fun PlaylistListCard(
             null
         }
     val metadataTrailingContent: (@Composable RowScope.() -> Unit)? =
-        if (isDownloaded || playlist.playlist.isHidden) {
+        if (playlist.playlist.isHidden) {
             {
-                if (isDownloaded) {
-                    Icon(
-                        painter = painterResource(R.drawable.offline),
-                        contentDescription = stringResource(R.string.downloaded_desc),
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                if (playlist.playlist.isHidden) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        painter = painterResource(R.drawable.visibility_off),
-                        contentDescription = stringResource(R.string.hide_playlist),
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.visibility_off),
+                    contentDescription = stringResource(R.string.hide_playlist),
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                )
             }
         } else {
             null
@@ -822,7 +755,6 @@ fun PlaylistListCard(
 @Composable
 fun PlaylistGridCard(
     playlist: Playlist,
-    isDownloaded: Boolean,
     onClick: () -> Unit,
     onPlay: () -> Unit,
     onLongClick: () -> Unit,
@@ -875,26 +807,6 @@ fun PlaylistGridCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            if (isDownloaded) {
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.offline),
-                        contentDescription = stringResource(R.string.downloaded_desc),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-            // Play overlay on bottom right of grid cover
             Box(
                 modifier =
                     Modifier

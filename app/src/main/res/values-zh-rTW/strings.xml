@@ -11,7 +11,6 @@
     <string name="history">歷史紀錄</string>
     <string name="stats">統計數據</string>
     <string name="account">帳戶</string>
-    <string name="your_youtube_playlists">你的YouTube播放清單</string>
     <string name="mood_and_genres">曲風與情境</string>
     <string name="quick_picks">精選內容</string>
     <string name="speed_dial">快速存取</string>
@@ -26,7 +25,6 @@
     <string name="last_week">上週</string>
     <string name="most_played_songs">最常播放</string>
     <string name="search">搜尋</string>
-    <string name="search_yt_music">在YouTube Music上搜尋</string>
     <string name="search_library">搜尋媒體庫</string>
     <string name="filter_library">媒體庫</string>
     <string name="filter_liked">喜歡</string>
@@ -85,7 +83,6 @@
     <string name="list_view">清單布局</string>
     <string name="grid_view">網格布局</string>
     <string name="personal_label">個人</string>
-    <string name="youtube_synced">已同步</string>
     <string name="options_label">選項</string>
     <string name="top_artist_badge">最愛藝人</string>
     <string name="no_artist_yet">暫無藝人</string>
@@ -899,7 +896,6 @@
     <string name="unsaved_account_dialog_cancel">取消登入</string>
     <string name="unsaved_account_dialog_no_thanks">不，謝謝</string>
     <string name="unsaved_account_dialog_save_yes">是的，保存目前帳戶</string>
-    <string name="youtube_channels">YouTube 頻道</string>
     <string name="hidden_playlists">隱藏播放清單</string>
     <string name="hidden_playlists_description">從媒體庫中隱藏的播放清單會顯示在此</string>
     <string name="no_hidden_playlists">沒有隱藏的播放清單</string>

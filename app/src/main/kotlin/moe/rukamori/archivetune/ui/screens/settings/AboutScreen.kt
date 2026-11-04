@@ -82,8 +82,6 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.ui.component.IconButton
 import moe.rukamori.archivetune.ui.utils.appBarScrollBehavior
 import moe.rukamori.archivetune.ui.utils.backToMain
-import moe.rukamori.archivetune.viewmodels.AboutContributorUiCollection
-import moe.rukamori.archivetune.viewmodels.AboutContributorsUiState
 import moe.rukamori.archivetune.viewmodels.AboutDependencyLicenseUiCollection
 import moe.rukamori.archivetune.viewmodels.AboutDependencyLicensesUiState
 import moe.rukamori.archivetune.viewmodels.AboutDialog
@@ -121,7 +119,6 @@ fun AboutScreen(
         onNavigateUp = navController::navigateUp,
         onNavigateHome = navController::backToMain,
         onOpenUri = viewModel::openUri,
-        onRetryContributors = viewModel::retryContributors,
         onOpenTranslationContributors = viewModel::openTranslationContributors,
         onOpenDependencyLicenses = viewModel::openDependencyLicenses,
         onDismissDialog = viewModel::dismissDialog,
@@ -138,7 +135,6 @@ private fun AboutScreenContent(
     onNavigateUp: () -> Unit,
     onNavigateHome: () -> Unit,
     onOpenUri: (String) -> Unit,
-    onRetryContributors: () -> Unit,
     onOpenTranslationContributors: () -> Unit,
     onOpenDependencyLicenses: () -> Unit,
     onDismissDialog: () -> Unit,
@@ -224,7 +220,6 @@ private fun AboutScreenContent(
                 AboutSuccessContent(
                     model = state.model,
                     onOpenUri = onOpenUri,
-                    onRetryContributors = onRetryContributors,
                     onOpenTranslationContributors = onOpenTranslationContributors,
                     onOpenDependencyLicenses = onOpenDependencyLicenses,
                     modifier =
@@ -665,7 +660,6 @@ private fun DependencyLicenseListItem(
 private fun AboutSuccessContent(
     model: AboutUiModel,
     onOpenUri: (String) -> Unit,
-    onRetryContributors: () -> Unit,
     onOpenTranslationContributors: () -> Unit,
     onOpenDependencyLicenses: () -> Unit,
     modifier: Modifier = Modifier,
@@ -729,18 +723,6 @@ private fun AboutSuccessContent(
                     title = stringResource(R.string.about_respecter),
                     members = model.respecters,
                     onOpenUri = onOpenUri,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-
-        item(key = "contributors", contentType = "about_contributors") {
-            AboutContentContainer {
-                ContributorsSection(
-                    state = model.contributorsState,
-                    readMoreUrl = model.contributorsReadMoreUrl,
-                    onOpenProfile = onOpenUri,
-                    onRetry = onRetryContributors,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -1157,208 +1139,6 @@ private fun MemberLinkActions(
             }
         }
     }
-}
-
-@Composable
-private fun ContributorsSection(
-    state: AboutContributorsUiState,
-    readMoreUrl: String,
-    onOpenProfile: (String) -> Unit,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(AboutSpacing.xs),
-    ) {
-        AboutSectionHeader(title = stringResource(R.string.about_contributors))
-        when (state) {
-            AboutContributorsUiState.Loading -> {
-                ContributorStatusContent(
-                    message = stringResource(R.string.loading),
-                    showRetry = false,
-                    onRetry = onRetry,
-                )
-            }
-
-            AboutContributorsUiState.Empty -> {
-                ContributorStatusContent(
-                    message = stringResource(R.string.no_results_found),
-                    showRetry = true,
-                    onRetry = onRetry,
-                )
-            }
-
-            is AboutContributorsUiState.Error -> {
-                ContributorStatusContent(
-                    message = stringResource(state.messageResId),
-                    showRetry = true,
-                    onRetry = onRetry,
-                )
-            }
-
-            is AboutContributorsUiState.Success -> {
-                ContributorList(
-                    contributors = state.contributors,
-                    readMoreUrl = readMoreUrl,
-                    onOpenProfile = onOpenProfile,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ContributorStatusContent(
-    message: String,
-    showRetry: Boolean,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AboutSpacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AboutSpacing.sm),
-        ) {
-            if (!showRetry) {
-                LoadingIndicator(modifier = Modifier.size(32.dp))
-            }
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (showRetry) {
-                TextButton(onClick = onRetry) {
-                    Text(text = stringResource(R.string.retry))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ContributorList(
-    contributors: AboutContributorUiCollection,
-    readMoreUrl: String,
-    onOpenProfile: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val itemCount = contributors.size + 1
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
-    ) {
-        repeat(contributors.size) { index ->
-            val contributor = contributors[index]
-            ContributorListItem(
-                login = contributor.login,
-                avatarUrl = contributor.avatarUrl,
-                profileUrl = contributor.profileUrl,
-                index = index,
-                itemCount = itemCount,
-                onOpenProfile = onOpenProfile,
-            )
-        }
-        ContributorReadMoreListItem(
-            readMoreUrl = readMoreUrl,
-            index = itemCount - 1,
-            itemCount = itemCount,
-            onOpenProfile = onOpenProfile,
-        )
-    }
-}
-
-@Composable
-private fun ContributorListItem(
-    login: String,
-    avatarUrl: String,
-    profileUrl: String,
-    index: Int,
-    itemCount: Int,
-    onOpenProfile: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val onClick = remember(profileUrl, onOpenProfile) { { onOpenProfile(profileUrl) } }
-
-    SegmentedListItem(
-        onClick = onClick,
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = itemCount),
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = 72.dp),
-        colors = AboutListItemDefaults.colors(),
-        leadingContent = {
-            AsyncImage(
-                model = avatarUrl,
-                contentDescription = login,
-                modifier =
-                    Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            )
-        },
-        content = {
-            Text(
-                text = login,
-                style = MaterialTheme.typography.bodyLargeEmphasized,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-    )
-}
-
-@Composable
-private fun ContributorReadMoreListItem(
-    readMoreUrl: String,
-    index: Int,
-    itemCount: Int,
-    onOpenProfile: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val onClick = remember(readMoreUrl, onOpenProfile) { { onOpenProfile(readMoreUrl) } }
-
-    SegmentedListItem(
-        onClick = onClick,
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = itemCount),
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = 72.dp),
-        colors = AboutListItemDefaults.colors(),
-        leadingContent = {
-            AboutLeadingIcon(iconResId = R.drawable.add_circle)
-        },
-        trailingContent = {
-            Icon(
-                painter = painterResource(R.drawable.arrow_forward),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        content = {
-            Text(
-                text = stringResource(R.string.more),
-                style = MaterialTheme.typography.bodyLargeEmphasized,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-    )
 }
 
 @Composable

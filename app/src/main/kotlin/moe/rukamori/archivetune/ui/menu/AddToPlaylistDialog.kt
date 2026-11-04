@@ -83,19 +83,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.constants.InnerTubeCookieKey
 import moe.rukamori.archivetune.db.entities.Playlist
-import moe.rukamori.archivetune.innertube.YouTube
-import moe.rukamori.archivetune.innertube.utils.hasYouTubeLoginCookie
 import moe.rukamori.archivetune.ui.component.CreatePlaylistDialog
 import moe.rukamori.archivetune.ui.component.DefaultDialog
 import moe.rukamori.archivetune.ui.component.PlaylistListItem
-import moe.rukamori.archivetune.utils.rememberPreference
 import java.time.LocalDateTime
 import java.util.Locale
 
@@ -128,7 +123,7 @@ private fun preferredAddTargetPlaylist(
 internal fun playlistsForAddToPlaylist(playlists: List<Playlist>): List<Playlist> =
     playlists
         .asSequence()
-        .filter { it.playlist.isEditable || it.playlist.browseId != null }
+        .filter { it.playlist.isEditable }
         .groupBy { it.playlist.browseId ?: it.id }
         .values
         .map { candidates ->
@@ -199,7 +194,6 @@ private fun compareNullableDates(
 @Composable
 fun AddToPlaylistDialog(
     isVisible: Boolean,
-    allowSyncing: Boolean = true,
     initialTextFieldValue: String? = null,
     onGetSong: suspend () -> List<String>,
     onDismiss: () -> Unit,
@@ -209,8 +203,6 @@ fun AddToPlaylistDialog(
     val coroutineScope = rememberCoroutineScope()
     val allPlaylists by database.playlistsByCreateDateAsc().collectAsStateWithLifecycle(initialValue = emptyList())
     val playlistPlayCounts by database.playlistPlayCounts().collectAsStateWithLifecycle(initialValue = emptyList())
-    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) { hasYouTubeLoginCookie(innerTubeCookie) }
     var sortOption by rememberSaveable { mutableStateOf(AddToPlaylistSortOption.RECENTLY_CREATED) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showSearchField by rememberSaveable { mutableStateOf(false) }
@@ -240,31 +232,6 @@ fun AddToPlaylistDialog(
         requestedSongIds: List<String>,
     ): Int {
         if (requestedSongIds.isEmpty()) return 0
-
-        val browseId = playlist.playlist.browseId
-        if (isLoggedIn && browseId != null) {
-            val acceptedSongEntries = mutableListOf<Pair<String, String?>>()
-            requestedSongIds.forEach { songId ->
-                var remoteAdded = false
-                var addedSetVideoId: String? = null
-                for (attempt in 0 until 3) {
-                    val result = YouTube.addToPlaylist(browseId, songId)
-                    if (result.isSuccess) {
-                        remoteAdded = true
-                        addedSetVideoId = result.getOrNull()
-                        break
-                    }
-                    if (attempt < 2) delay(250)
-                }
-                if (remoteAdded) {
-                    acceptedSongEntries += songId to addedSetVideoId
-                }
-            }
-            if (acceptedSongEntries.isNotEmpty()) {
-                database.addSongEntriesToPlaylist(playlist, acceptedSongEntries)
-            }
-            return acceptedSongEntries.size
-        }
 
         database.addSongToPlaylist(playlist, requestedSongIds)
         return requestedSongIds.size
@@ -705,7 +672,6 @@ fun AddToPlaylistDialog(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             initialTextFieldValue = initialTextFieldValue,
-            allowSyncing = allowSyncing,
         )
     }
 

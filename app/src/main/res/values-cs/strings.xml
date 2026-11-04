@@ -19,7 +19,6 @@
     <string name="speed_dial">Rychlé vytočení</string>
     <string name="forgotten_favorites">Zapomenuté klasiky</string>
     <string name="keep_listening">Pokračovat v poslechu</string>
-    <string name="your_youtube_playlists">Vaše YouTube playlisty</string>
     <string name="similar_to">Podobá se</string>
     <string name="new_release_albums">Nově vydané alba</string>
     <string name="integration">Integrace</string>
@@ -29,7 +28,6 @@
     <string name="last_week">Minulý týden</string>
     <string name="most_played_songs">Nejhranější skladby</string>
     <string name="search">Vyhledat</string>
-    <string name="search_yt_music">Vyledat v YouTube Music</string>
     <string name="search_library">Vyhledat v knihovně</string>
     <string name="filter_library">Knihovna</string>
     <string name="filter_liked">Oblíbené</string>

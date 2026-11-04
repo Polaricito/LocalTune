@@ -15,7 +15,6 @@
     <string name="quick_picks">Lựa chọn nhanh</string>
     <string name="forgotten_favorites">Bản nhạc yêu thích bị lãng quên</string>
     <string name="keep_listening">Tiếp tục nghe</string>
-    <string name="your_youtube_playlists">Danh sách phát YouTube của bạn</string>
     <string name="similar_to">Tương tự như</string>
     <string name="new_release_albums">Album mới phát hành</string>
     <string name="integration">Tích hợp</string>
@@ -25,7 +24,6 @@
     <string name="last_week">Tuần trước</string>
     <string name="most_played_songs">Bài hát được phát nhiều nhất</string>
     <string name="search">Tìm kiếm</string>
-    <string name="search_yt_music">Tìm kiếm trên YouTube Music</string>
     <string name="search_library">Tìm kiếm trong thư viện</string>
     <string name="filter_library">Thư viện</string>
     <string name="filter_liked">Đã thích</string>
@@ -74,7 +72,6 @@
     <string name="list_view">Xem dạng danh sách</string>
     <string name="grid_view">Xem dạng lưới</string>
     <string name="personal_label">Cá nhân</string>
-    <string name="youtube_synced">Đã đồng bộ YouTube</string>
     <string name="options_label">Tùy chọn</string>
     <string name="top_artist_badge">NGHỆ SĨ HÀNG ĐẦU</string>
     <string name="no_artist_yet">Chưa có nghệ sĩ</string>
@@ -760,7 +757,6 @@
     <string name="download_progress_percent">%1$d%%</string>
     <string name="lyrics_synced_badge">Đã đồng bộ</string>
     <string name="proxy_connection_invalid_configuration">Máy chủ proxy hoặc cổng không hợp lệ</string>
-    <string name="youtube_channels">Kênh YouTube</string>
     <string name="hide_playlist">Ẩn danh sách phát</string>
     <string name="unhide_playlist">Bỏ ẩn danh sách phát</string>
     <string name="hide_playlist_confirm">Ẩn \u0022%1$s\u0022 khỏi thư viện?</string>
