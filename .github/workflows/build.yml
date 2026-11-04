@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: early-access-build-${{ github.ref }}
+  group: build-apks-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -212,33 +212,13 @@ jobs:
             exit 1
           fi
           mv "${RELEASE_APKS[0]}" "$RELEASE_DIR/out/${{ steps.variant.outputs.apk_name }}"
-  
-      - name: Publish Signed Release APK to Private R2
-        shell: bash
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-          R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
-          R2_BUCKET: ${{ vars.R2_BUCKET }}
-          APK_PATH: ${{ steps.release_dir.outputs.release_dir }}/out/${{ steps.variant.outputs.apk_name }}
-          APK_NAME: ${{ steps.variant.outputs.apk_name }}
-        run: bash .github/scripts/publish-early-access.sh
 
-  finalizeEarlyAccess:
-    name: Finalize Build and Enforce R2 Retention
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v7
-      - name: Retain Five Successful Commits per Branch
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-          R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
-          R2_BUCKET: ${{ vars.R2_BUCKET }}
-        run: python3 .github/scripts/finalize-early-access.py
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.variant.outputs.apk_name }}
+          path: ${{ steps.release_dir.outputs.release_dir }}/out/${{ steps.variant.outputs.apk_name }}
+          if-no-files-found: error
 
   notifyUser:
     name: Notify referenced issues

@@ -129,15 +129,9 @@ jobs:
                   per_page: 100
                 });
 
-                const hasExistingNotification = comments.some((comment) => {
-                  const body = comment.body ?? "";
-                  return body.includes(commentMarker) ||
-                    (
-                      comment.user?.type === "Bot" &&
-                      body.includes("This issue was referenced on commit") &&
-                      nightlyUrls.some((nightlyUrl) => body.includes(nightlyUrl))
-                    );
-                });
+                const hasExistingNotification = comments.some((comment) =>
+                  (comment.body ?? "").includes(commentMarker)
+                );
 
                 if (hasExistingNotification) {
                   core.info(`Issue #${issueNumber} already has a nightly reference notification comment.`);

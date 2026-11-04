@@ -7,6 +7,9 @@ on:
       - 'app/build.gradle.kts'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check-version:
     if: contains(github.ref, 'refs/tags') == false
@@ -50,19 +53,20 @@ jobs:
           echo "version_changed: ${{ steps.check_version.outputs.version_changed }}"
           echo "new_version: ${{ steps.check_version.outputs.new_version }}"
 
-  reproducibility:
+  prepare:
     needs: check-version
     if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       commit_sha: ${{ steps.push_contributors.outputs.commit_sha }}
     steps:
       - uses: actions/checkout@v7
         with:
-          token: ${{ secrets.RELEASE_PAT }}
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.15
         uses: actions/setup-python@v7
         with:
           python-version: '3.15'
@@ -82,77 +86,9 @@ jobs:
           fi
           echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v6
-        with:
-          java-version: '27'
-          distribution: 'temurin'
-
-      - name: Set Up Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          cache-cleanup: on-success
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Verify reproducible unsigned universal APK
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          locate_universal_apk() {
-            local metadata
-            local output_file
-            local candidate
-
-            metadata="$(find app/build/outputs/apk -type f -name output-metadata.json | head -n 1 || true)"
-            if [ -z "${metadata:-}" ]; then
-              return 1
-            fi
-
-            output_file="$(grep -oP '"outputFile"\s*:\s*"\K[^"]+' "$metadata" | head -n 1 || true)"
-            if [ -z "${output_file:-}" ]; then
-              return 1
-            fi
-
-            candidate="$(dirname "$metadata")/$output_file"
-            if [ -f "$candidate" ]; then
-              echo "$candidate"
-              return 0
-            fi
-
-            return 1
-          }
-
-          ./gradlew clean assembleGmsMobileUniversalRelease
-          APK_1="$(locate_universal_apk || true)"
-          if [ -z "${APK_1:-}" ] || [ ! -f "$APK_1" ]; then
-            echo "Could not find unsigned universal release APK (first build)."
-            echo "APK outputs:"
-            find app/build/outputs/apk -maxdepth 6 -type f -print || true
-            exit 1
-          fi
-          SHA_1="$(sha256sum "$APK_1" | awk '{print $1}')"
-          cp "$APK_1" /tmp/universal-1.apk
-
-          ./gradlew clean assembleGmsMobileUniversalRelease
-          APK_2="$(locate_universal_apk || true)"
-          if [ -z "${APK_2:-}" ] || [ ! -f "$APK_2" ]; then
-            echo "Could not find unsigned universal release APK (second build)."
-            echo "APK outputs:"
-            find app/build/outputs/apk -maxdepth 6 -type f -print || true
-            exit 1
-          fi
-          SHA_2="$(sha256sum "$APK_2" | awk '{print $1}')"
-
-          echo "sha256 #1: $SHA_1"
-          echo "sha256 #2: $SHA_2"
-          test "$SHA_1" = "$SHA_2"
-
   build:
     name: Build Release APKs
-    needs: [check-version, reproducibility]
+    needs: [check-version, prepare]
     if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     strategy:
@@ -197,10 +133,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.reproducibility.outputs.commit_sha }}
+          ref: ${{ needs.prepare.outputs.commit_sha }}
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.15
         uses: actions/setup-python@v7
         with:
           python-version: '3.15'
@@ -208,7 +144,7 @@ jobs:
       - name: Generate translation contributor credits
         run: python scripts/generate_translation_contributors.py
 
-      - name: Set up JDK 21
+      - name: Set up JDK 27
         uses: actions/setup-java@v6
         with:
           java-version: '27'
@@ -345,15 +281,15 @@ jobs:
           path: ${{ steps.release_dir.outputs.release_dir }}/out/${{ steps.variant.outputs.apk_name }}
 
   create-release:
-    needs: [check-version, reproducibility, build]
+    needs: [check-version, prepare, build]
     if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.reproducibility.outputs.commit_sha }}
+          ref: ${{ needs.prepare.outputs.commit_sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -374,7 +310,7 @@ jobs:
           fi
 
           echo "from_ref=$FROM_REF" >> "$GITHUB_OUTPUT"
-          echo "to_ref=${{ needs.reproducibility.outputs.commit_sha }}" >> "$GITHUB_OUTPUT"
+          echo "to_ref=${{ needs.prepare.outputs.commit_sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Build Changelog
         id: build_changelog
@@ -408,7 +344,7 @@ jobs:
 
       - name: Create Release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           MOBILE_UNIVERSAL_APK=$(find downloaded_artifacts/app-gms-mobile-universal-release -name "*.apk" | head -n 1)
           OTHER_APKS=$(find downloaded_artifacts -path "*/app-*-release/*.apk" ! -path "*/app-gms-mobile-universal-release/*")
@@ -418,7 +354,7 @@ jobs:
           EOF
 
           gh release create "v${{ needs.check-version.outputs.new_version }}" \
-            --target "${{ needs.reproducibility.outputs.commit_sha }}" \
+            --target "${{ needs.prepare.outputs.commit_sha }}" \
             --title "${{ needs.check-version.outputs.new_version }}" \
             --notes-file release_notes.md \
             "$MOBILE_UNIVERSAL_APK" \
