@@ -319,6 +319,7 @@ jobs:
           mode: "COMMIT"
           fromTag: ${{ steps.changelog_range.outputs.from_ref }}
           toTag: ${{ steps.changelog_range.outputs.to_ref }}
+          outputFile: "release_notes.md"
           configurationJson: |
             {
               "template": "# Changelog\n\n#{{CHANGELOG}}\n\n<details>\n<summary>Other changes</summary>\n\n#{{UNCATEGORIZED}}\n</details>\n",
@@ -345,10 +346,12 @@ jobs:
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGELOG: ${{ steps.build_changelog.outputs.changelog }}
         run: |
           set -euo pipefail
-          printf '%s\n' "$CHANGELOG" > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Changelog file is missing or empty"
+            exit 1
+          fi
 
           mapfile -t APKS < <(find downloaded_artifacts -type f -name "*.apk")
           if [ "${#APKS[@]}" -eq 0 ]; then
