@@ -75,6 +75,7 @@ import moe.rukamori.archivetune.constants.EqualizerVirtualizerEnabledKey
 import moe.rukamori.archivetune.constants.EqualizerVirtualizerStrengthKey
 import moe.rukamori.archivetune.constants.WakelockKey
 import moe.rukamori.archivetune.db.MusicDatabase
+import moe.rukamori.archivetune.db.entities.Event
 import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.queues.EmptyQueue
@@ -82,6 +83,7 @@ import moe.rukamori.archivetune.playback.queues.Queue
 import moe.rukamori.archivetune.utils.dataStore
 import moe.rukamori.archivetune.widget.LoadWidgetInsightsUseCase
 import timber.log.Timber
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class, UnstableApi::class)
@@ -549,7 +551,22 @@ class MusicService :
     // ── PlaybackStatsListener.Callback ────────────────────────────────
 
     override fun onPlaybackStatsReady(eventTime: AnalyticsListener.EventTime, playbackStats: PlaybackStats) {
-        // Local-only: no history upload
+        val mediaItem = eventTime.timeline.getWindow(eventTime.windowIndex, Timeline.Window()).mediaItem
+        val songId = mediaItem.mediaId.takeIf(String::isNotBlank) ?: return
+        val playTime = playbackStats.totalPlayTimeMs
+        if (playTime < MinHistoryPlayTimeMs) return
+
+        ioScope.launch {
+            runCatching {
+                database.insert(
+                    Event(
+                        songId = songId,
+                        timestamp = LocalDateTime.now(),
+                        playTime = playTime,
+                    ),
+                )
+            }.onFailure { Timber.w(it, "Could not record local playback history") }
+        }
     }
 
     // ── Data source / player factories ────────────────────────────────
@@ -907,6 +924,7 @@ class MusicService :
         private const val AUDIO_EFFECT_INITIALIZATION_MAX_ATTEMPTS = 4
         private const val AUDIO_EFFECT_INITIALIZATION_RETRY_DELAY_MS = 250L
         private const val AUDIO_EFFECT_ROUTE_REBIND_DELAY_MS = 200L
+        private const val MinHistoryPlayTimeMs = 5_000L
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888
     }
