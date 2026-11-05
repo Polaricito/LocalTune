@@ -353,6 +353,18 @@ jobs:
             exit 1
           fi
 
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("release_notes.md")
+          text = path.read_text(encoding="utf-8")
+          limit = 120_000
+          if len(text) > limit:
+              text = text[:limit].rstrip() + "\n\n_Release notes truncated. See the commit history for the full list._\n"
+              path.write_text(text, encoding="utf-8")
+              print(f"Truncated release notes to {len(text)} characters")
+          PY
+
           mapfile -t APKS < <(find downloaded_artifacts -type f -name "*.apk")
           if [ "${#APKS[@]}" -eq 0 ]; then
             echo "No APK artifacts found"
