@@ -345,17 +345,20 @@ jobs:
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG: ${{ steps.build_changelog.outputs.changelog }}
         run: |
-          MOBILE_UNIVERSAL_APK=$(find downloaded_artifacts/app-gms-mobile-universal-release -name "*.apk" | head -n 1)
-          OTHER_APKS=$(find downloaded_artifacts -path "*/app-*-release/*.apk" ! -path "*/app-gms-mobile-universal-release/*")
+          set -euo pipefail
+          printf '%s\n' "$CHANGELOG" > release_notes.md
 
-          cat > release_notes.md <<EOF
-          ${{ steps.build_changelog.outputs.changelog }}
-          EOF
+          mapfile -t APKS < <(find downloaded_artifacts -type f -name "*.apk")
+          if [ "${#APKS[@]}" -eq 0 ]; then
+            echo "No APK artifacts found"
+            exit 1
+          fi
+          printf 'Uploading %d APKs\n' "${#APKS[@]}"
 
           gh release create "v${{ needs.check-version.outputs.new_version }}" \
             --target "${{ needs.prepare.outputs.commit_sha }}" \
             --title "${{ needs.check-version.outputs.new_version }}" \
             --notes-file release_notes.md \
-            "$MOBILE_UNIVERSAL_APK" \
-            $OTHER_APKS
+            "${APKS[@]}"
