@@ -1501,6 +1501,9 @@ interface DatabaseDao {
         offset: Int,
     ): List<EventWithSong>
 
+    @Query("SELECT MAX(rowId) FROM event")
+    fun latestEventRowId(): Flow<Long?>
+
     @Transaction
     @Query(
         """

@@ -13,7 +13,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.EventWithSong
 import moe.rukamori.archivetune.utils.reportException
@@ -29,6 +32,7 @@ class HistoryViewModel
         val database: MusicDatabase,
     ) : ViewModel() {
         private val loadedEvents = mutableListOf<EventWithSong>()
+        private val eventsMutex = Mutex()
         val events = MutableStateFlow<Map<DateAgo, List<EventWithSong>>>(emptyMap())
         val isLoadingMoreEvents = MutableStateFlow(false)
         val canLoadMoreEvents = MutableStateFlow(true)
@@ -39,6 +43,11 @@ class HistoryViewModel
 
         init {
             loadMoreEvents()
+            viewModelScope.launch(Dispatchers.IO) {
+                database.latestEventRowId().collectLatest {
+                    refreshEvents()
+                }
+            }
         }
 
         fun loadMoreEvents() {
@@ -47,10 +56,12 @@ class HistoryViewModel
             isLoadingMoreEvents.value = true
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val page = database.events(limit = HISTORY_PAGE_SIZE, offset = loadedEvents.size)
-                    loadedEvents += page
-                    events.value = loadedEvents.groupEventsByDate()
-                    canLoadMoreEvents.value = page.size == HISTORY_PAGE_SIZE
+                    eventsMutex.withLock {
+                        val page = database.events(limit = HISTORY_PAGE_SIZE, offset = loadedEvents.size)
+                        loadedEvents += page
+                        events.value = loadedEvents.groupEventsByDate()
+                        canLoadMoreEvents.value = page.size == HISTORY_PAGE_SIZE
+                    }
                 } catch (exception: CancellationException) {
                     throw exception
                 } catch (exception: Throwable) {
@@ -58,6 +69,22 @@ class HistoryViewModel
                     canLoadMoreEvents.value = false
                 } finally {
                     isLoadingMoreEvents.value = false
+                }
+            }
+        }
+
+        private suspend fun refreshEvents() {
+            eventsMutex.withLock {
+                try {
+                    val page = database.events(limit = HISTORY_PAGE_SIZE, offset = 0)
+                    loadedEvents.clear()
+                    loadedEvents += page
+                    events.value = loadedEvents.groupEventsByDate()
+                    canLoadMoreEvents.value = page.size == HISTORY_PAGE_SIZE
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Throwable) {
+                    reportException(exception)
                 }
             }
         }
