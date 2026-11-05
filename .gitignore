@@ -99,6 +99,7 @@ core.*
 !/core/
 *.so
 *.bin
+!app/src/main/assets/whisper/ggml-tiny-q5_1.bin
 /.trae
 
 # Node server
