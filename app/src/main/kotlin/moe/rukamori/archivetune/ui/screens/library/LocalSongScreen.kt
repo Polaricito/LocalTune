@@ -157,7 +157,7 @@ fun LocalSongScreen(
     val (includedFolders, onIncludedFoldersChange) =
         rememberPreference(
             LocalSongsIncludedFoldersKey,
-            setOf("music", "/storage/emulated/0/music"),
+            LocalSongScanConfig.DefaultIncludedFolders,
         )
     val (excludedFolders, onExcludedFoldersChange) =
         rememberPreference(

@@ -62,6 +62,15 @@ fun buildSettingsGroups(
             accentColor = MaterialTheme.colorScheme.tertiary,
             onClick = { navController.navigate("settings/lyrics") },
         )
+    val localSongs =
+        SettingsItem(
+            key = "local_songs",
+            icon = painterResource(R.drawable.music_note),
+            title = stringResource(R.string.local_songs_scan_title),
+            subtitle = stringResource(R.string.local_songs_ready_desc),
+            accentColor = MaterialTheme.colorScheme.secondary,
+            onClick = { navController.navigate("local_songs") },
+        )
     val storage =
         SettingsItem(
             key = "storage",
@@ -152,7 +161,7 @@ fun buildSettingsGroups(
         ),
         SettingsGroup(
             title = stringResource(R.string.storage),
-            items = listOf(storage, backupRestore),
+            items = listOf(localSongs, storage, backupRestore),
         ),
         SettingsGroup(
             title = stringResource(R.string.about),

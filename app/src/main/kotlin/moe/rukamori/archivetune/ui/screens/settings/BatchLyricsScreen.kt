@@ -9,6 +9,11 @@
 
 package moe.rukamori.archivetune.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,15 +38,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
@@ -61,12 +71,32 @@ fun BatchLyricsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showPlaylistMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasAllFilesAccess by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager(),
+        )
+    }
     val progress =
         if (state.total <= 0) {
             0f
         } else {
             state.completed.toFloat() / state.total.toFloat()
         }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    hasAllFilesAccess =
+                        Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                            Environment.isExternalStorageManager()
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(
         topBar = {
@@ -175,6 +205,33 @@ fun BatchLyricsScreen(
                         description = stringResource(R.string.batch_lyrics_model_notice),
                         icon = { Icon(painterResource(R.drawable.music_note), null) },
                     )
+                }
+            }
+
+            if (!hasAllFilesAccess) {
+                PreferenceGroup(title = stringResource(R.string.batch_lyrics_file_access_group)) {
+                    item {
+                        PreferenceEntry(
+                            title = { Text(stringResource(R.string.batch_lyrics_file_access_title)) },
+                            description = stringResource(R.string.batch_lyrics_file_access_description),
+                            icon = { Icon(painterResource(R.drawable.storage), null) },
+                            onClick = {
+                                val appSettings =
+                                    Intent(
+                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                        Uri.parse("package:${context.packageName}"),
+                                    )
+                                runCatching { context.startActivity(appSettings) }
+                                    .onFailure {
+                                        runCatching {
+                                            context.startActivity(
+                                                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION),
+                                            )
+                                        }
+                                    }
+                            },
+                        )
+                    }
                 }
             }
 

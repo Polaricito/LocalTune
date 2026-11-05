@@ -12,6 +12,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.datastore.preferences.core.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -91,10 +92,10 @@ class LocalLyricsRepository
             withContext(Dispatchers.IO) {
                 val uri = Uri.parse(songId)
                 val location = resolveLocation(uri) ?: return@withContext null
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    readSidecarScoped(location)
-                } else {
+                if (canAccessFilesDirectly()) {
                     readSidecarLegacy(location)
+                } else {
+                    readSidecarScoped(location)
                 }
             }
 
@@ -105,12 +106,19 @@ class LocalLyricsRepository
             withContext(Dispatchers.IO) {
                 val uri = Uri.parse(songId)
                 val location = resolveLocation(uri) ?: return@withContext false
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    writeSidecarScoped(location, lyrics)
-                } else {
+                if (canAccessFilesDirectly()) {
                     writeSidecarLegacy(location, lyrics)
+                } else {
+                    writeSidecarScoped(location, lyrics)
                 }
             }
+
+        private fun canAccessFilesDirectly(): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+                (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                        Environment.isExternalStorageManager()
+                )
 
         private fun resolveLocation(uri: Uri): AudioLocation? {
             val projection =
@@ -233,7 +241,12 @@ class LocalLyricsRepository
         }
 
         private fun legacySidecarFile(location: AudioLocation): File? {
-            val audioFile = location.dataPath?.let(::File) ?: return null
+            val audioFile =
+                location.dataPath?.let(::File)
+                    ?: location.relativePath?.let { relativePath ->
+                        File(Environment.getExternalStorageDirectory(), "$relativePath${location.displayName}")
+                    }
+                    ?: return null
             val parent = audioFile.parentFile ?: return null
             val expectedName = sidecarName(location)
             val direct = File(parent, expectedName)

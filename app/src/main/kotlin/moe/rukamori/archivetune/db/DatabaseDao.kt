@@ -77,22 +77,22 @@ interface DatabaseDao {
     fun downloadedSongsList(): List<Song>
 
     @Transaction
-    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY rowId")
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL OR isLocal = 1 ORDER BY rowId")
     fun songsByRowIdAsc(): Flow<List<Song>>
 
     @Query("SELECT id FROM song WHERE inLibrary IS NOT NULL")
     suspend fun librarySongIds(): List<String>
 
     @Transaction
-    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY inLibrary")
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL OR isLocal = 1 ORDER BY inLibrary")
     fun songsByCreateDateAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY title")
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL OR isLocal = 1 ORDER BY title")
     fun songsByNameAsc(): Flow<List<Song>>
 
     @Transaction
-    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL ORDER BY totalPlayTime")
+    @Query("SELECT * FROM song WHERE inLibrary IS NOT NULL OR isLocal = 1 ORDER BY totalPlayTime")
     fun songsByPlayTimeAsc(): Flow<List<Song>>
 
     fun songs(
@@ -155,7 +155,7 @@ interface DatabaseDao {
     @Query(
         """
         SELECT * FROM song
-        WHERE inLibrary IS NOT NULL AND isMusicVideo = 0
+        WHERE (inLibrary IS NOT NULL OR isLocal = 1) AND isMusicVideo = 0
         ORDER BY song.id
         """,
     )
@@ -165,7 +165,7 @@ interface DatabaseDao {
     @Query(
         """
         SELECT * FROM song
-        WHERE inLibrary IS NOT NULL AND isMusicVideo = 0
+        WHERE (inLibrary IS NOT NULL OR isLocal = 1) AND isMusicVideo = 0
         ORDER BY inLibrary
         """,
     )
@@ -175,7 +175,7 @@ interface DatabaseDao {
     @Query(
         """
         SELECT * FROM song
-        WHERE inLibrary IS NOT NULL AND isMusicVideo = 0
+        WHERE (inLibrary IS NOT NULL OR isLocal = 1) AND isMusicVideo = 0
         ORDER BY title
         """,
     )
@@ -185,7 +185,7 @@ interface DatabaseDao {
     @Query(
         """
         SELECT * FROM song
-        WHERE inLibrary IS NOT NULL AND isMusicVideo = 0
+        WHERE (inLibrary IS NOT NULL OR isLocal = 1) AND isMusicVideo = 0
         ORDER BY totalPlayTime
         """,
     )

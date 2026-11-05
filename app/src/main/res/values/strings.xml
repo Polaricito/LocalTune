@@ -327,6 +327,9 @@
     <string name="batch_lyrics_start">Generate lyrics</string>
     <string name="batch_lyrics_cancel">Cancel</string>
     <string name="batch_lyrics_finished">Process finished. Lyrics are available immediately in the player.</string>
+    <string name="batch_lyrics_file_access_group">Lyrics file access</string>
+    <string name="batch_lyrics_file_access_title">Save .lrc files next to your music</string>
+    <string name="batch_lyrics_file_access_description">Allow all files access so transcribed lyrics can be written beside each audio file (Cancion.flac → Cancion.lrc).</string>
     <string name="lyrics_word_sync">Word Sync</string>
     <string name="sleep_timer">Sleep timer</string>
     <string name="end_of_song">End of song</string>

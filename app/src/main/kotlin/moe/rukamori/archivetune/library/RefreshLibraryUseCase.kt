@@ -7,10 +7,17 @@
 
 package moe.rukamori.archivetune.library
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.first
+import moe.rukamori.archivetune.constants.LocalSongsExcludedFoldersKey
+import moe.rukamori.archivetune.constants.LocalSongsIncludedFoldersKey
+import moe.rukamori.archivetune.constants.LocalSongsMinDurationSecondsKey
 import moe.rukamori.archivetune.localmedia.LocalSongScanConfig
 import moe.rukamori.archivetune.localmedia.ScanLocalMusicUseCase
+import moe.rukamori.archivetune.utils.dataStore
 import timber.log.Timber
 
 enum class LibrarySyncTarget {
@@ -36,11 +43,21 @@ sealed interface RefreshLibraryResult {
 class RefreshLibraryUseCase
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val scanLocalMusic: ScanLocalMusicUseCase,
     ) {
         suspend operator fun invoke(target: LibrarySyncTarget): RefreshLibraryResult =
             try {
-                scanLocalMusic(LocalSongScanConfig())
+                val preferences = context.dataStore.data.first()
+                scanLocalMusic(
+                    LocalSongScanConfig(
+                        minimumDurationSeconds = preferences[LocalSongsMinDurationSecondsKey] ?: 0,
+                        includedFolders =
+                            preferences[LocalSongsIncludedFoldersKey]
+                                ?: LocalSongScanConfig.DefaultIncludedFolders,
+                        excludedFolders = preferences[LocalSongsExcludedFoldersKey] ?: emptySet(),
+                    ),
+                )
                 RefreshLibraryResult.Success
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

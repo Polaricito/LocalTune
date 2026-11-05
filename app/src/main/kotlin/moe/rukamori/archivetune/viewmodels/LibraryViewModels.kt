@@ -145,7 +145,7 @@ class LibrarySongsViewModel
                 .map {
                     Triple(
                         Triple(
-                            it[SongFilterKey].toEnum(SongFilter.LIKED),
+                            it[SongFilterKey].toEnum(SongFilter.LIBRARY),
                             it[SongSortTypeKey].toEnum(SongSortType.CREATE_DATE),
                             (it[SongSortDescendingKey] ?: true),
                         ),
@@ -186,7 +186,7 @@ class LibraryArtistsViewModel
             context.dataStore.data
                 .map {
                     Triple(
-                        it[ArtistFilterKey].toEnum(ArtistFilter.LIKED),
+                        it[ArtistFilterKey].toEnum(ArtistFilter.LIBRARY),
                         it[ArtistSortTypeKey].toEnum(ArtistSortType.CREATE_DATE),
                         it[ArtistSortDescendingKey] ?: true,
                     )
@@ -218,7 +218,7 @@ class LibraryAlbumsViewModel
                 .map {
                     Pair(
                         Triple(
-                            it[AlbumFilterKey].toEnum(AlbumFilter.LIKED),
+                            it[AlbumFilterKey].toEnum(AlbumFilter.LIBRARY),
                             it[AlbumSortTypeKey].toEnum(AlbumSortType.CREATE_DATE),
                             it[AlbumSortDescendingKey] ?: true,
                         ),

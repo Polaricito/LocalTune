@@ -60,6 +60,8 @@ data class LocalSongScanConfig(
         get() = deduplicateFolderEntries(excludedFolders)
 
     companion object {
+        val DefaultIncludedFolders = setOf("music", "/storage/emulated/0/music")
+
         private val DuplicateSlashRegex = Regex("/+")
 
         fun normalizeFolderEntry(raw: String): String =
