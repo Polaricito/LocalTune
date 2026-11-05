@@ -551,7 +551,10 @@ class MusicService :
     // ── PlaybackStatsListener.Callback ────────────────────────────────
 
     override fun onPlaybackStatsReady(eventTime: AnalyticsListener.EventTime, playbackStats: PlaybackStats) {
-        val mediaItem = eventTime.timeline.getWindow(eventTime.windowIndex, Timeline.Window()).mediaItem
+        val timeline = eventTime.timeline
+        val windowIndex = eventTime.windowIndex
+        if (windowIndex !in 0 until timeline.windowCount) return
+        val mediaItem = timeline.getWindow(windowIndex, Timeline.Window()).mediaItem
         val songId = mediaItem.mediaId.takeIf(String::isNotBlank) ?: return
         val playTime = playbackStats.totalPlayTimeMs
         if (playTime < MinHistoryPlayTimeMs) return
