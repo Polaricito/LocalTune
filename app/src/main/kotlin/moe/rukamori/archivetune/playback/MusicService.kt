@@ -276,10 +276,11 @@ class MusicService :
             val status = queue.getInitialStatus()
             val items = status.items
             if (items.isEmpty()) return@launch
+            val startIndex = status.mediaItemIndex.coerceIn(items.indices)
             queueTitle = status.title
-            currentMediaMetadata.value = items.firstOrNull()?.metadata
+            currentMediaMetadata.value = items[startIndex].metadata
             player.apply {
-                setMediaItems(items, 0, C.TIME_UNSET)
+                setMediaItems(items, startIndex, status.position)
                 prepare()
                 play()
             }
