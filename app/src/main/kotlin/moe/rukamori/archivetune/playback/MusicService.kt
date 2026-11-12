@@ -232,6 +232,12 @@ class MusicService :
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     ),
                 ).build()
+        // The UI connects through the local MusicBinder instead of a
+        // MediaController, so MediaSessionService never learns about the
+        // session on its own. Registering it here gives the service its media
+        // notification and foreground-service state, which is what keeps
+        // playback alive after the task is removed.
+        addSession(mediaSession)
 
         database
             .blockedArtistIds()
