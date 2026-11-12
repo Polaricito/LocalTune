@@ -1,23 +1,26 @@
-# ArchiveTune Privacy Notice
+# LocalTune Privacy Notice
 
-Last updated: 2026-11-02
+Last updated: 2026-11-11
 
 ## Scope
 
-This notice covers the Android ArchiveTune app in this repository. ArchiveTune
-is a fully offline local music player. It does not declare the `INTERNET`
-permission and does not contact YouTube, YouTube Music, Spotify, Last.fm,
-ListenBrainz, Discord, lyrics providers, update servers or any other remote
-service.
+This notice covers the Android LocalTune app in this repository. LocalTune is a
+local-first music player and an unofficial fork of ArchiveTune. Playback,
+library management and lyric generation work offline. The app contacts only two
+optional, keyless services: LRCLIB for lyrics when you explicitly request an
+online lookup, and Deezer for artist photos and release metadata when online
+artist info is enabled.
 
 ## Privacy Summary
 
 - All app data is stored locally on your device.
-- ArchiveTune does not collect, sell or share personal data.
+- LocalTune does not collect, sell or share personal data.
 - There is no account system, no analytics, no advertising SDK and no automatic
   crash reporting.
 - Lyrics are read from the audio file, from a `.lrc` file next to the song, or
-  generated on-device with whisper.cpp. No audio or text is uploaded.
+  generated on-device with whisper.cpp. No audio is uploaded.
+- The optional online features send only track or artist metadata to LRCLIB or
+  Deezer, and can be disabled in Settings → Player.
 - A manual backup export is available, and it is created only when you ask for
   it.
 
@@ -38,12 +41,19 @@ and is excluded from Android backup and device transfer.
 
 ## Network Access
 
-ArchiveTune does not request the `INTERNET` permission. The app cannot create
-network connections, so no data is transmitted to the developer or to third
-parties.
+LocalTune declares the `INTERNET` and `ACCESS_NETWORK_STATE` permissions for two
+optional features:
 
-If a future build adds network functionality, this notice and the manifest must
-be updated together.
+- **Online lyrics (LRCLIB)** – when you choose the online-lyrics action, the app
+  sends the track title, artist and album (or a combined search query) to
+  `lrclib.net` and stores the returned lyrics locally.
+- **Online artist info (Deezer)** – when an artist screen is opened and the
+  feature is enabled, the app sends the artist name to `api.deezer.com` and
+  receives a photo, profile link and release metadata.
+
+Both features are enabled by default and can be turned off in Settings → Player.
+No audio is transmitted. No other remote services are used, and there are no
+accounts, telemetry or update servers.
 
 ## Android Permissions
 
@@ -51,6 +61,7 @@ be updated together.
 | --- | --- |
 | `READ_MEDIA_AUDIO` (Android 13+) | Read audio files from the local library |
 | `READ_EXTERNAL_STORAGE` (Android 12 and below) | Read audio files on older versions |
+| `MANAGE_EXTERNAL_STORAGE` (Android 11+) | Write `.lrc` sidecars next to audio files |
 | `WRITE_EXTERNAL_STORAGE` (Android 9 and below) | Write `.lrc` files next to audio files |
 | `POST_NOTIFICATIONS` | Show the playback notification |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keep playback running in the background |
@@ -58,6 +69,7 @@ be updated together.
 | `BLUETOOTH_CONNECT` | Show metadata and controls on Bluetooth devices |
 | `BLUETOOTH` (Android 11 and below) | Bluetooth audio device integration |
 | `MODIFY_AUDIO_SETTINGS` | Equalizer, audio effects and volume handling |
+| `INTERNET`, `ACCESS_NETWORK_STATE` | Optional LRCLIB lyrics lookup and Deezer artist info |
 | `VIBRATE` | Haptic feedback for controls |
 
 The app does not request location, contacts, camera, calendar, SMS, call log or
@@ -67,7 +79,7 @@ If you deny a permission, the related feature may not work.
 
 ## Backups, Device Transfer and Retention
 
-ArchiveTune enables Android backup support. Local database content and app
+LocalTune enables Android backup support. Local database content and app
 preferences may be included in Android cloud backup or device transfer,
 depending on your Android settings. The whisper model is explicitly excluded.
 
@@ -94,13 +106,13 @@ or remove it through an app action.
 - The app enables `allowAudioPlaybackCapture`. Under Android platform rules,
   compatible system features or authorized apps may be able to capture app
   audio playback.
-- No secrets, tokens or credentials are stored because the app has no online
-  accounts.
+- No secrets, tokens, API keys or credentials are stored because the app has no
+  online accounts and the optional services are keyless.
 
 ## Changes to This Notice
 
-This file must be reviewed whenever ArchiveTune changes its permissions,
-storage model, backup behavior or network architecture.
+This file must be reviewed whenever LocalTune changes its permissions, storage
+model, backup behavior or network architecture.
 
 ## Project Contact
 
