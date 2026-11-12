@@ -111,7 +111,7 @@ fun LibraryArtistsScreen(
     val (sortDescending, onSortDescendingChange) = rememberPreference(ArtistSortDescendingKey, true)
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
 
-    var filter by rememberEnumPreference(ArtistFilterKey, ArtistFilter.LIKED)
+    var filter by rememberEnumPreference(ArtistFilterKey, ArtistFilter.LIBRARY)
 
     LaunchedEffect(ytmSync, filter) {
         if (ytmSync) {
@@ -502,8 +502,13 @@ fun LibraryArtistsScreen(
                 ) {
                     LibraryEmptyState(
                         iconRes = R.drawable.artist,
-                        actionLabelRes = R.string.search_your_library,
-                        onAction = openSearch,
+                        actionLabelRes = R.string.add_artist,
+                        titleRes = if (filter == ArtistFilter.LIKED)
+                            R.string.subscribed_only_empty
+                        else
+                            R.string.no_artists_yet,
+                        descriptionRes = R.string.library_empty_artist_description,
+                        onAction = { openSearch() },
                     )
                 }
             }

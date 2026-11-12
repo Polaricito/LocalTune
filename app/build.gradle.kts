@@ -42,8 +42,8 @@ android {
     applicationId = "moe.rukamori.archivetune"
         minSdk = 26
         targetSdk = 37
-        versionCode = 144
-        versionName = "15.1.2"
+        versionCode = 145
+        versionName = "15.1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -263,6 +263,8 @@ dependencies {
     implementation(libs.aboutlibraries.core)
     implementation(libs.coil)
     implementation(libs.coil.gif)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.okhttp)
 
     implementation(libs.shimmer)
 

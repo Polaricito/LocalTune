@@ -86,6 +86,8 @@ import moe.rukamori.archivetune.LocalDatabase
 import moe.rukamori.archivetune.LocalPlayerAwareWindowInsets
 import moe.rukamori.archivetune.LocalPlayerConnection
 import moe.rukamori.archivetune.R
+import moe.rukamori.archivetune.artist.OnlineArtistInfo
+import moe.rukamori.archivetune.artist.OnlineArtistRelease
 import moe.rukamori.archivetune.constants.AppBarHeight
 import moe.rukamori.archivetune.constants.CONTENT_TYPE_ALBUM
 import moe.rukamori.archivetune.constants.CONTENT_TYPE_HEADER
@@ -138,6 +140,7 @@ fun ArtistScreen(
     val loadedLibrarySongs by viewModel.librarySongs.collectAsStateWithLifecycle()
     val loadedLibraryAlbums by viewModel.libraryAlbums.collectAsStateWithLifecycle()
     val blockState by viewModel.blockState.collectAsStateWithLifecycle()
+    val onlineArtistInfo by viewModel.onlineArtistInfo.collectAsStateWithLifecycle()
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
     val isArtistBlocked = (blockState as? ArtistBlockState.Success)?.isBlocked == true
     val librarySongs = remember(loadedLibrarySongs, isArtistBlocked) { loadedLibrarySongs.takeUnless { isArtistBlocked }.orEmpty() }
@@ -164,8 +167,10 @@ fun ArtistScreen(
         } else {
             Color.White
         }
-    val thumbnail = libraryArtist?.artist?.thumbnailUrl
     val artistName = libraryArtist?.artist?.name
+    val localThumbnail = libraryArtist?.artist?.thumbnailUrl
+    val onlineThumbnail = onlineArtistInfo?.pictureUrl
+    val thumbnail = localThumbnail ?: onlineThumbnail
 
     val transparentAppBar by remember {
         derivedStateOf {
@@ -173,10 +178,12 @@ fun ArtistScreen(
         }
     }
 
-    val latestRelease =
+    val libraryLatestRelease =
         remember(libraryAlbums) {
             libraryAlbums.maxByOrNull { it.album.year ?: Int.MIN_VALUE }
         }
+
+    val onlineLatestRelease = onlineArtistInfo?.latestRelease
 
     val filteredLibrarySongs =
         remember(librarySongs, hideExplicit) {
@@ -356,7 +363,6 @@ fun ArtistScreen(
                             }
 
                             ArtistPrimaryActions(
-                                isLocalArtist = libraryArtist?.artist?.isLocal == true,
                                 isSubscribed = isSubscribed,
                                 contentColor = heroContentColor,
                                 contrastingColor = surfaceColor,
@@ -395,7 +401,7 @@ fun ArtistScreen(
                     }
                 }
 
-                latestRelease?.let { album ->
+                libraryLatestRelease?.let { album ->
                     item(
                         key = "new_release_${album.id}",
                         contentType = CONTENT_TYPE_ALBUM,
@@ -406,6 +412,15 @@ fun ArtistScreen(
                             year = album.album.year,
                             onClick = { navController.navigateToAlbum(album.id) },
                         )
+                    }
+                }
+
+                onlineLatestRelease?.let { release ->
+                    item(
+                        key = "online_new_release_${release.title.hashCode()}",
+                        contentType = CONTENT_TYPE_ALBUM,
+                    ) {
+                        ArtistOnlineReleaseItem(release)
                     }
                 }
 
@@ -672,6 +687,27 @@ private fun ArtistOverflowMenu(
     }
 }
 
+@Composable
+private fun ArtistOnlineReleaseItem(release: OnlineArtistRelease) {
+    val context = LocalContext.current
+    ArtistNewReleaseSection(
+        title = release.title,
+        thumbnailUrl = release.coverUrl,
+        year = release.year,
+        onClick = {
+            release.url?.let { url ->
+                val uri = android.net.Uri.parse(url)
+                context.startActivity(
+                    android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        uri,
+                    ),
+                )
+            }
+        },
+    )
+}
+
 private const val ArtistHeroArtworkSizePx = 1200
 private const val ArtistReleaseArtworkSizePx = 320
 private val ArtistHeroArtworkSizeBuckets = listOf(ArtistHeroArtworkSizePx)
@@ -683,7 +719,6 @@ private const val ArtistStatSeparator = "  •  "
 
 @Composable
 private fun ArtistPrimaryActions(
-    isLocalArtist: Boolean,
     isSubscribed: Boolean,
     contentColor: Color,
     contrastingColor: Color,
@@ -698,8 +733,8 @@ private fun ArtistPrimaryActions(
         isAdded = isSubscribed,
         contentColor = contentColor,
         contrastingColor = contrastingColor,
-        addContentDescription = if (isLocalArtist) R.string.add_to_library else R.string.subscribe,
-        removeContentDescription = if (isLocalArtist) R.string.remove_from_library else R.string.subscribed,
+        addContentDescription = R.string.subscribe,
+        removeContentDescription = R.string.subscribed,
         onShuffle = if (canShuffle) onShuffle else null,
         onPlay = if (canPlay) onPlay else null,
         onToggleAdd = onToggleSubscription,

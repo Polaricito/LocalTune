@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.rukamori.archivetune.R
 
@@ -39,6 +40,8 @@ internal fun LibraryEmptyState(
     @DrawableRes iconRes: Int,
     @StringRes actionLabelRes: Int,
     onAction: () -> Unit,
+    @StringRes titleRes: Int = R.string.no_results_found,
+    @StringRes descriptionRes: Int? = null,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -68,13 +71,25 @@ internal fun LibraryEmptyState(
             }
 
             Text(
-                text = stringResource(R.string.no_results_found),
+                text = stringResource(titleRes),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            descriptionRes?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(it),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Button(
                 onClick = onAction,

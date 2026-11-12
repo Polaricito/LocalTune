@@ -25,6 +25,12 @@ import javax.inject.Singleton
  * loaded lazily. Transcription is serialized because a whisper context is not
  * safe to use from multiple threads at the same time.
  */
+data class WhisperSegment(
+    val startMs: Long,
+    val endMs: Long,
+    val text: String,
+)
+
 @Singleton
 class WhisperEngine
     @Inject
@@ -43,16 +49,52 @@ class WhisperEngine
             mutex.withLock {
                 withContext(Dispatchers.Default) {
                     val pointer = ensureContext() ?: return@withContext null
-                    val threadCount =
-                        (Runtime.getRuntime().availableProcessors() - 1)
-                            .coerceIn(1, MaxThreads)
                     runCatching {
-                        nativeTranscribe(pointer, samples, threadCount, language)
+                        nativeTranscribe(pointer, samples, threadCount(), language)
                     }.onFailure {
                         Timber.tag(TAG).e(it, "whisper.cpp transcription failed")
                     }.getOrNull()
                 }
             }
+
+        suspend fun transcribeSegments(
+            samples: FloatArray,
+            language: String? = null,
+        ): List<WhisperSegment>? =
+            mutex.withLock {
+                withContext(Dispatchers.Default) {
+                    val pointer = ensureContext() ?: return@withContext null
+                    val raw =
+                        runCatching {
+                            nativeTranscribeSegments(pointer, samples, threadCount(), language)
+                        }.onFailure {
+                            Timber.tag(TAG).e(it, "whisper.cpp segment transcription failed")
+                        }.getOrNull()
+                    raw
+                        ?.lineSequence()
+                        ?.mapNotNull { line ->
+                            val parts = line.split('\t', limit = 3)
+                            if (parts.size != 3) return@mapNotNull null
+                            val start = parts[0].toLongOrNull() ?: return@mapNotNull null
+                            val end = parts[1].toLongOrNull() ?: return@mapNotNull null
+                            val text = parts[2].trim()
+                            if (text.isEmpty()) null else WhisperSegment(start, end, text)
+                        }?.toList()
+                        ?.takeIf { it.isNotEmpty() }
+                        ?.also { segments ->
+                            Timber
+                                .tag(TAG)
+                                .i(
+                                    "Transcribed %d segments, span 0..%d ms",
+                                    segments.size,
+                                    segments.last().endMs,
+                                )
+                        }
+                }
+            }
+
+        private fun threadCount(): Int =
+            (Runtime.getRuntime().availableProcessors() - 1).coerceIn(1, MaxThreads)
 
         private suspend fun ensureContext(): Long? {
             if (contextPointer != 0L) return contextPointer
@@ -118,6 +160,13 @@ class WhisperEngine
         private external fun nativeRelease(contextPointer: Long)
 
         private external fun nativeTranscribe(
+            contextPointer: Long,
+            samples: FloatArray,
+            threadCount: Int,
+            language: String?,
+        ): String?
+
+        private external fun nativeTranscribeSegments(
             contextPointer: Long,
             samples: FloatArray,
             threadCount: Int,

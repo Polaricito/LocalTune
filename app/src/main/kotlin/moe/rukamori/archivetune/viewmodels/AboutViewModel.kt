@@ -52,6 +52,7 @@ data class AboutUiModel(
     val versionName: String,
     val buildHash: String?,
     val buildVariant: String,
+    val forkUrl: String,
     val primaryLinks: AboutLinkCollection,
     val leadDeveloper: TeamMember,
     val collaborators: TeamMemberCollection,
@@ -213,6 +214,10 @@ class AboutViewModel
         private var dependencyLicensesState: AboutDependencyLicensesUiState = AboutDependencyLicensesUiState.Loading
         private var activeDialog = AboutDialog.NONE
 
+        init {
+            updateState()
+        }
+
         fun openTranslationContributors() {
             activeDialog = AboutDialog.TRANSLATION_CONTRIBUTORS
             updateState()
@@ -319,13 +324,14 @@ class AboutViewModel
                 versionName = BuildConfig.VERSION_NAME,
                 buildHash = currentBuildHash,
                 buildVariant = if (BuildConfig.DEBUG) DebugBuildBadge else BuildConfig.ARCHITECTURE.uppercase(),
+                forkUrl = "https://github.com/rukamori/ArchiveTune",
                 primaryLinks =
                     AboutLinkCollection.of(
                         AboutLinkUiModel(
                             id = "github",
                             iconResId = R.drawable.github,
                             labelResId = R.string.about_content_desc_github,
-                            url = "https://github.com/rukamori/ArchiveTune",
+                            url = "https://github.com/Polaricito/LocalTune",
                         ),
                         AboutLinkUiModel(
                             id = "website",

@@ -82,4 +82,54 @@ class LocalLyricsTranscriber
                 savedToFile = saveResult.savedToFile,
             )
         }
+
+        /**
+         * Turns plain-text lyrics into line-synced LRC by matching each line
+         * against on-device whisper.cpp segment timestamps.
+         */
+        suspend fun align(
+            songId: String,
+            plainLyrics: String,
+        ): LyricsTranscriptionResult {
+            if (plainLyrics.isBlank()) {
+                return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.EMPTY_RESULT)
+            }
+
+            val samples =
+                decoder.decode(Uri.parse(songId))
+                    ?: return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.AUDIO_UNAVAILABLE)
+            if (samples.isEmpty()) {
+                return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.AUDIO_UNAVAILABLE)
+            }
+
+            val segments =
+                whisperEngine.transcribeSegments(samples)
+                    ?: return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.MODEL_UNAVAILABLE)
+            val entries =
+                LyricsAligner.align(plainLyrics, segments)
+                    ?: return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.EMPTY_RESULT)
+            val lyrics = LyricsUtils.formatLrc(entries)
+            if (lyrics.isBlank()) {
+                return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.EMPTY_RESULT)
+            }
+
+            val saveResult =
+                runCatching {
+                    lyricsRepository.saveLyrics(
+                        songId = songId,
+                        lyrics = lyrics,
+                        source = LyricsEntity.Source.WHISPER_ALIGNMENT,
+                    )
+                }.getOrNull()
+                    ?: return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.SAVE_FAILED)
+
+            if (!saveResult.savedToDatabase && !saveResult.savedToFile) {
+                return LyricsTranscriptionResult.Failure(LyricsTranscriptionFailure.SAVE_FAILED)
+            }
+
+            return LyricsTranscriptionResult.Success(
+                lyrics = lyrics,
+                savedToFile = saveResult.savedToFile,
+            )
+        }
     }

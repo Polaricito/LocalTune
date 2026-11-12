@@ -80,6 +80,7 @@ class AudioPcmDecoder
                 var inputDone = false
                 var outputDone = false
                 var idleOutputPolls = 0
+                var totalSourceFrames = 0L
 
                 while (!outputDone) {
                     if (!inputDone) {
@@ -133,6 +134,7 @@ class AudioPcmDecoder
                                 outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
                                 val mono = decodeToMono(outputBuffer, outputEncoding, outputChannelCount)
                                 if (mono.isNotEmpty()) {
+                                    totalSourceFrames += mono.size
                                     val activeResampler =
                                         resampler ?: MonoResampler(outputSampleRate).also { resampler = it }
                                     activeResampler.feed(mono)
@@ -163,6 +165,16 @@ class AudioPcmDecoder
                                 } else {
                                     AudioFormat.ENCODING_PCM_16BIT
                                 }
+                            Timber
+                                .tag(TAG)
+                                .i(
+                                    "Decoder format: %d Hz, %d ch, encoding %d (source %d Hz, %d ch)",
+                                    outputSampleRate,
+                                    outputChannelCount,
+                                    outputEncoding,
+                                    sourceSampleRate,
+                                    sourceChannelCount,
+                                )
                         }
 
                         outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> {
@@ -176,7 +188,17 @@ class AudioPcmDecoder
                     }
                 }
 
-                return resampler?.toFloatArray()?.takeIf { it.isNotEmpty() }
+                val output = resampler?.toFloatArray()?.takeIf { it.isNotEmpty() }
+                Timber
+                    .tag(TAG)
+                    .i(
+                        "Decoded %d source frames -> %d samples at %d Hz (%.1f s)",
+                        totalSourceFrames,
+                        output?.size ?: 0,
+                        TargetSampleRate,
+                        (output?.size ?: 0).toDouble() / TargetSampleRate,
+                    )
+                return output
             } finally {
                 codec?.runCatching { stop() }
                 codec?.runCatching { release() }

@@ -28,7 +28,7 @@
         <activity
             android:name=".automotive.AutomotiveSettingsActivity"
             android:exported="true"
-            android:theme="@style/Theme.ArchiveTune">
+            android:theme="@style/Theme.LocalTune">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />

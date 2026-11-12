@@ -46,6 +46,8 @@ import moe.rukamori.archivetune.constants.CrossfadeDurationKey
 import moe.rukamori.archivetune.constants.CrossfadeEnabledKey
 import moe.rukamori.archivetune.constants.CrossfadeGaplessKey
 import moe.rukamori.archivetune.constants.DeviceMutePlaybackRecoveryVolumeKey
+import moe.rukamori.archivetune.constants.EnableLrcLibKey
+import moe.rukamori.archivetune.constants.EnableOnlineArtistInfoKey
 import moe.rukamori.archivetune.constants.HISTORY_DURATION_DEFAULT
 import moe.rukamori.archivetune.constants.HistoryDuration
 import moe.rukamori.archivetune.constants.PauseOnDeviceMuteKey
@@ -133,6 +135,16 @@ fun PlayerSettings(navController: NavController) {
         rememberPreference(
             StopMusicOnTaskClearKey,
             defaultValue = false,
+        )
+    val (onlineLyrics, onOnlineLyricsChange) =
+        rememberPreference(
+            EnableLrcLibKey,
+            defaultValue = true,
+        )
+    val (onlineArtistInfo, onOnlineArtistInfoChange) =
+        rememberPreference(
+            EnableOnlineArtistInfoKey,
+            defaultValue = true,
         )
     val (historyDuration, onHistoryDurationChange) =
         rememberPreference(
@@ -369,6 +381,28 @@ fun PlayerSettings(navController: NavController) {
                         icon = { Icon(painterResource(R.drawable.skip_next), null) },
                         checked = autoSkipNextOnError,
                         onCheckedChange = onAutoSkipNextOnErrorChange,
+                    )
+                }
+            }
+
+            PreferenceGroup(title = stringResource(R.string.online_features)) {
+                item {
+                    SwitchPreference(
+                        title = { Text(stringResource(R.string.online_lyrics)) },
+                        description = stringResource(R.string.online_lyrics_desc),
+                        icon = { Icon(painterResource(R.drawable.language), null) },
+                        checked = onlineLyrics,
+                        onCheckedChange = onOnlineLyricsChange,
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = { Text(stringResource(R.string.online_artist_info)) },
+                        description = stringResource(R.string.online_artist_info_desc),
+                        icon = { Icon(painterResource(R.drawable.artist), null) },
+                        checked = onlineArtistInfo,
+                        onCheckedChange = onOnlineArtistInfoChange,
                     )
                 }
             }

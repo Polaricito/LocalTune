@@ -48,7 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import moe.rukamori.archivetune.R
-import moe.rukamori.archivetune.db.entities.LyricsEntity
+import moe.rukamori.archivetune.constants.EnableLrcLibKey
+import moe.rukamori.archivetune.lyrics.LyricsUtils
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.ui.component.DefaultDialog
 import moe.rukamori.archivetune.ui.component.MenuSurfaceSection
@@ -56,6 +57,7 @@ import moe.rukamori.archivetune.ui.component.NewAction
 import moe.rukamori.archivetune.ui.component.NewActionGrid
 import moe.rukamori.archivetune.ui.component.NewMenuItem
 import moe.rukamori.archivetune.ui.component.TextFieldDialog
+import moe.rukamori.archivetune.utils.rememberPreference
 import moe.rukamori.archivetune.viewmodels.LocalLyricsMessage
 import moe.rukamori.archivetune.viewmodels.LocalLyricsViewModel
 import kotlin.math.roundToInt
@@ -63,7 +65,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsMenu(
-    lyricsProvider: () -> LyricsEntity?,
+    lyricsTextProvider: () -> String?,
     mediaMetadataProvider: () -> MediaMetadata,
     lyricsSyncOffset: Int,
     onLyricsSyncOffsetChange: (Int) -> Unit,
@@ -77,6 +79,11 @@ fun LyricsMenu(
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var showLyricsSyncOffsetDialog by rememberSaveable { mutableStateOf(false) }
     val isExporting by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+    val (onlineLyricsEnabled) = rememberPreference(EnableLrcLibKey, true)
+    val lyricsText = lyricsTextProvider()
+    val canSyncWithWhisper =
+        !lyricsText.isNullOrBlank() && !LyricsUtils.isLineSyncedLrc(lyricsText)
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
@@ -86,6 +93,11 @@ fun LyricsMenu(
                     LocalLyricsMessage.SavedToFile -> context.getString(R.string.lyrics_saved_to_file)
                     LocalLyricsMessage.FileExportFailed -> context.getString(R.string.lyrics_file_export_failed)
                     LocalLyricsMessage.LoadFailed -> context.getString(R.string.lyrics_load_failed)
+                    LocalLyricsMessage.OnlineLyricsFound -> context.getString(R.string.lyrics_online_found)
+                    LocalLyricsMessage.OnlineLyricsNotFound -> context.getString(R.string.lyrics_online_not_found)
+                    LocalLyricsMessage.WhisperSyncCompleted -> context.getString(R.string.lyrics_whisper_sync_completed)
+                    LocalLyricsMessage.WhisperSyncFailed -> context.getString(R.string.lyrics_whisper_sync_failed)
+                    LocalLyricsMessage.WhisperSyncNoLyrics -> context.getString(R.string.lyrics_whisper_sync_no_lyrics)
                 }
             Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
         }
@@ -96,7 +108,7 @@ fun LyricsMenu(
             onDismiss = { showEditDialog = false },
             icon = { Icon(painter = painterResource(R.drawable.edit), contentDescription = null) },
             title = { Text(text = mediaMetadataProvider().title) },
-            initialTextFieldValue = TextFieldValue(lyricsProvider()?.lyrics.orEmpty()),
+            initialTextFieldValue = TextFieldValue(lyricsText.orEmpty()),
             singleLine = false,
             maxLines = 24,
             onDone = {
@@ -207,6 +219,32 @@ fun LyricsMenu(
                                 text = stringResource(R.string.lyrics_save_to_file),
                                 onClick = { viewModel.exportToFile(mediaMetadataProvider()) },
                                 enabled = !isExporting,
+                            ),
+                            NewAction(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.download),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                                text = stringResource(R.string.lyrics_download_online),
+                                onClick = { viewModel.fetchOnlineLyrics(mediaMetadataProvider()) },
+                                enabled = onlineLyricsEnabled && !isExporting,
+                            ),
+                            NewAction(
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.sync),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                                text = stringResource(R.string.lyrics_sync_with_whisper),
+                                onClick = { viewModel.syncWithWhisper(mediaMetadataProvider()) },
+                                enabled = canSyncWithWhisper && !isSyncing,
                             ),
                             NewAction(
                                 icon = {

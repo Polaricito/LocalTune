@@ -15,6 +15,8 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission
@@ -44,14 +46,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
-        android:theme="@style/Theme.ArchiveTune"
+        android:theme="@style/Theme.LocalTune"
         tools:targetApi="tiramisu">
         <activity
             android:name=".MainActivity"
             android:configChanges="uiMode"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.ArchiveTune"
+            android:theme="@style/Theme.LocalTune"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -98,7 +100,7 @@
         <activity
             android:name=".RestoreBackupFileActivity"
             android:exported="true"
-            android:theme="@style/Theme.ArchiveTune"
+            android:theme="@style/Theme.LocalTune"
             android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -273,7 +275,7 @@
             android:name=".DebugActivity"
             android:exported="true"
             android:process=":crash"
-            android:theme="@style/Theme.ArchiveTune">
+            android:theme="@style/Theme.LocalTune">
         </activity>
     </application>
 

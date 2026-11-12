@@ -21,6 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -31,6 +33,9 @@ import moe.rukamori.archivetune.R
 import moe.rukamori.archivetune.artist.ArtistBlockRequest
 import moe.rukamori.archivetune.artist.ObserveArtistBlockedUseCase
 import moe.rukamori.archivetune.artist.SetArtistBlockedUseCase
+import moe.rukamori.archivetune.artist.OnlineArtistInfo
+import moe.rukamori.archivetune.artist.OnlineArtistRepository
+import moe.rukamori.archivetune.constants.EnableOnlineArtistInfoKey
 import moe.rukamori.archivetune.constants.HideExplicitKey
 import moe.rukamori.archivetune.constants.HideVideoKey
 import moe.rukamori.archivetune.db.MusicDatabase
@@ -77,6 +82,7 @@ class ArtistViewModel
         private val database: MusicDatabase,
         observeArtistBlocked: ObserveArtistBlockedUseCase,
         private val setArtistBlocked: SetArtistBlockedUseCase,
+        private val onlineArtistRepository: OnlineArtistRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         val artistId = savedStateHandle.get<String>("artistId")!!
@@ -88,6 +94,21 @@ class ArtistViewModel
             database
                 .artist(artistId)
                 .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+        val onlineArtistInfo =
+            combine(
+                context.dataStore.data.map { it[EnableOnlineArtistInfoKey] ?: true }.distinctUntilChanged(),
+                libraryArtist,
+            ) { enabled, artist ->
+                enabled to (artist?.artist?.name)
+            }.flatMapLatest { (enabled, artistName) ->
+                if (!enabled || artistName.isNullOrBlank()) {
+                    flow<OnlineArtistInfo?> { emit(null) }
+                } else {
+                    flow { emit(onlineArtistRepository.fetch(artistName)) }
+                        .stateIn<OnlineArtistInfo?>(viewModelScope, SharingStarted.Lazily, null)
+                }
+            }.stateIn<OnlineArtistInfo?>(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
         val blockState =
             observeArtistBlocked(artistId)

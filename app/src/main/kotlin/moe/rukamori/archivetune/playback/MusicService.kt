@@ -73,14 +73,17 @@ import moe.rukamori.archivetune.constants.EqualizerOutputGainMbKey
 import moe.rukamori.archivetune.constants.EqualizerSelectedProfileIdKey
 import moe.rukamori.archivetune.constants.EqualizerVirtualizerEnabledKey
 import moe.rukamori.archivetune.constants.EqualizerVirtualizerStrengthKey
+import moe.rukamori.archivetune.constants.PersistentQueueKey
 import moe.rukamori.archivetune.constants.WakelockKey
 import moe.rukamori.archivetune.db.MusicDatabase
 import moe.rukamori.archivetune.db.entities.Event
 import moe.rukamori.archivetune.extensions.metadata
+import moe.rukamori.archivetune.extensions.toMediaItem
 import moe.rukamori.archivetune.models.MediaMetadata
 import moe.rukamori.archivetune.playback.queues.EmptyQueue
 import moe.rukamori.archivetune.playback.queues.Queue
 import moe.rukamori.archivetune.utils.dataStore
+import moe.rukamori.archivetune.utils.getAsync
 import moe.rukamori.archivetune.widget.LoadWidgetInsightsUseCase
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -99,6 +102,9 @@ class MusicService :
     lateinit var equalizerPlaybackController: EqualizerPlaybackController
 
     @Inject
+    lateinit var queuePersistence: QueuePersistence
+
+    @Inject
     internal lateinit var loadWidgetInsightsUseCase: LoadWidgetInsightsUseCase
 
     private val binder = MusicBinder(this)
@@ -106,6 +112,10 @@ class MusicService :
     private val hasBoundClients: Boolean
         get() = boundClientCount > 0
     private var idleStopJob: Job? = null
+    private var queuePersistJob: Job? = null
+
+    @Volatile
+    private var queueGeneration = 0L
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -261,6 +271,9 @@ class MusicService :
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, android.os.Handler(mainLooper))
         audioDeviceCallbackRegistered = true
         audioOutputResolver.refresh()
+
+        restorePersistedQueue()
+        startQueuePersistenceLoop()
     }
 
     private fun <T> kotlinx.coroutines.flow.Flow<T>.collectInScope(action: suspend (T) -> Unit) {
@@ -276,6 +289,7 @@ class MusicService :
             val status = queue.getInitialStatus()
             val items = status.items
             if (items.isEmpty()) return@launch
+            queueGeneration++
             val startIndex = status.mediaItemIndex.coerceIn(items.indices)
             queueTitle = status.title
             currentMediaMetadata.value = items[startIndex].metadata
@@ -285,6 +299,7 @@ class MusicService :
                 play()
             }
             queueRestoreCompleted.value = true
+            schedulePersistQueue()
         }
     }
 
@@ -363,7 +378,92 @@ class MusicService :
         queueTitle = null
         sleepTimer.clear()
         releaseAudioEffects()
-        if (clearPersistentState) queueRestoreCompleted.value = false
+        if (clearPersistentState) {
+            queueRestoreCompleted.value = false
+            queuePersistence.clear()
+        }
+    }
+
+    // ── Persistent queue ─────────────────────────────────────────────
+
+    private fun restorePersistedQueue() {
+        val generation = queueGeneration
+        scope.launch {
+            val enabled = runCatching { dataStore.getAsync(PersistentQueueKey, true) }.getOrDefault(true)
+            if (!enabled) {
+                queueRestoreCompleted.value = true
+                return@launch
+            }
+            val snapshot = withContext(Dispatchers.IO) { queuePersistence.load() }
+            if (snapshot == null || snapshot.items.isEmpty()) {
+                queueRestoreCompleted.value = true
+                return@launch
+            }
+            if (generation != queueGeneration) {
+                queueRestoreCompleted.value = true
+                return@launch
+            }
+            if (player.mediaItemCount > 0) {
+                // A queue was already created while the snapshot was loading.
+                queueRestoreCompleted.value = true
+                return@launch
+            }
+            val items = snapshot.items.map { it.toMediaItem() }
+            val index = snapshot.index.coerceIn(items.indices)
+            queueTitle = snapshot.title
+            player.setMediaItems(items, index, snapshot.positionMs.coerceAtLeast(0L))
+            player.prepare()
+            player.pause()
+            currentMediaMetadata.value = items[index].metadata
+            queueRestoreCompleted.value = true
+        }
+    }
+
+    private fun captureQueueSnapshot(): QueuePersistence.Snapshot? {
+        val count = player.mediaItemCount
+        if (count <= 0) return null
+        val items = ArrayList<MediaMetadata>(count)
+        for (index in 0 until count) {
+            val metadata = player.getMediaItemAt(index).metadata ?: return null
+            items += metadata
+        }
+        return QueuePersistence.Snapshot(
+            items = items,
+            index = player.currentMediaItemIndex.coerceIn(0, count - 1),
+            positionMs = player.currentPosition.coerceAtLeast(0L),
+            title = queueTitle,
+            playWhenReady = player.playWhenReady,
+        )
+    }
+
+    private fun schedulePersistQueue() {
+        queuePersistJob?.cancel()
+        queuePersistJob =
+            scope.launch {
+                delay(750)
+                persistQueueAsync()
+            }
+    }
+
+    private fun persistQueueAsync() {
+        val snapshot = captureQueueSnapshot()
+        ioScope.launch {
+            if (snapshot == null) queuePersistence.clear() else queuePersistence.save(snapshot)
+        }
+    }
+
+    private fun persistQueueBlocking() {
+        val snapshot = captureQueueSnapshot()
+        if (snapshot == null) queuePersistence.clear() else queuePersistence.save(snapshot)
+    }
+
+    private fun startQueuePersistenceLoop() {
+        scope.launch {
+            while (true) {
+                delay(if (player.isPlaying) PlayingPersistIntervalMs else PausedPersistIntervalMs)
+                persistQueueAsync()
+            }
+        }
     }
 
     private fun currentAudioOutputDeviceSignature(): String? =
@@ -460,6 +560,7 @@ class MusicService :
     }
 
     override fun onDestroy() {
+        persistQueueBlocking()
         equalizerPlaybackController.detach(this)
         abandonAudioFocus()
         if (audioDeviceCallbackRegistered) {
@@ -507,6 +608,18 @@ class MusicService :
         return START_NOT_STICKY
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        persistQueueBlocking()
+        if (player.playWhenReady || player.isPlaying) {
+            // Keep the media session and playback alive after the task is
+            // removed. Calling super here would let MediaSessionService stop
+            // itself and drop the queue.
+            return
+        }
+        // Paused queues are safe on disk and restored on the next launch.
+        stopSelf()
+    }
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession = mediaSession
 
     private fun scheduleStopIfIdle() {
@@ -526,6 +639,7 @@ class MusicService :
         }
         updateWakeLock()
         updateWidget()
+        schedulePersistQueue()
     }
 
     override fun onPlaybackStateChanged(state: Int) {
@@ -534,11 +648,13 @@ class MusicService :
         }
         updateWakeLock()
         updateWidget()
+        schedulePersistQueue()
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         currentMediaMetadata.value = mediaItem?.metadata
         updateWidget()
+        schedulePersistQueue()
     }
 
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -929,6 +1045,8 @@ class MusicService :
         private const val AUDIO_EFFECT_INITIALIZATION_RETRY_DELAY_MS = 250L
         private const val AUDIO_EFFECT_ROUTE_REBIND_DELAY_MS = 200L
         private const val MinHistoryPlayTimeMs = 5_000L
+        private const val PlayingPersistIntervalMs = 10_000L
+        private const val PausedPersistIntervalMs = 30_000L
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888
     }

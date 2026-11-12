@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "whisper.h"
 
@@ -60,8 +61,8 @@ bool is_non_speech(const std::string & text) {
     return true;
 }
 
-std::string format_lrc_timestamp(int64_t centiseconds) {
-    const int64_t totalMs = std::max<int64_t>(0, centiseconds) * 10;
+std::string format_lrc_timestamp(int64_t milliseconds) {
+    const int64_t totalMs = std::max<int64_t>(0, milliseconds);
     const int64_t minutes = totalMs / 60000;
     const int64_t seconds = (totalMs % 60000) / 1000;
     const int64_t hundredths = (totalMs % 1000) / 10;
@@ -86,6 +87,62 @@ std::string sanitize_utf8(const std::string & value) {
         }
     }
     return result;
+}
+
+struct Segment {
+    int64_t start_ms;
+    int64_t end_ms;
+    std::string text;
+};
+
+bool run_transcription(
+        whisper_context * context,
+        float * samples,
+        int sample_count,
+        int thread_count,
+        const std::string & language,
+        std::vector<Segment> & out_segments) {
+    whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    params.n_threads = std::clamp<int>(thread_count, 1, 8);
+    params.translate = false;
+    params.no_context = true;
+    params.no_timestamps = false;
+    params.single_segment = false;
+    params.print_special = false;
+    params.print_progress = false;
+    params.print_realtime = false;
+    params.print_timestamps = false;
+    params.token_timestamps = false;
+    params.max_len = 80;
+    params.split_on_word = true;
+    params.suppress_nst = true;
+    params.language = language.c_str();
+
+    const int result = whisper_full(context, params, samples, sample_count);
+    if (result != 0) {
+        LOGW("whisper_full failed with code %d", result);
+        return false;
+    }
+
+    const int segment_count = whisper_full_n_segments(context);
+    std::string previous_line;
+    for (int i = 0; i < segment_count; ++i) {
+        const char * raw_text = whisper_full_get_segment_text(context, i);
+        if (raw_text == nullptr) continue;
+
+        const std::string text = trim(sanitize_utf8(raw_text));
+        if (text.empty() || is_non_speech(text)) continue;
+        if (!previous_line.empty() && text == previous_line) continue;
+
+        previous_line = text;
+        Segment segment{};
+        segment.start_ms = whisper_full_get_segment_t0(context, i) * 10;
+        segment.end_ms = whisper_full_get_segment_t1(context, i) * 10;
+        segment.text = text;
+        out_segments.push_back(segment);
+    }
+
+    return true;
 }
 
 } // namespace
@@ -148,53 +205,70 @@ Java_moe_rukamori_archivetune_lyrics_WhisperEngine_nativeTranscribe(
     }
     if (language.empty()) language = "auto";
 
-    whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
-    params.n_threads = std::clamp<int>(static_cast<int>(thread_count), 1, 8);
-    params.translate = false;
-    params.no_context = true;
-    params.no_timestamps = false;
-    params.single_segment = false;
-    params.print_special = false;
-    params.print_progress = false;
-    params.print_realtime = false;
-    params.print_timestamps = false;
-    params.token_timestamps = false;
-    params.max_len = 80;
-    params.split_on_word = true;
-    params.suppress_nst = true;
-    params.language = language.c_str();
-
-    const int result = whisper_full(context, params, samples, sample_count);
+    std::vector<Segment> segments;
+    const bool ok = run_transcription(
+        context, samples, sample_count, static_cast<int>(thread_count), language, segments);
     env->ReleaseFloatArrayElements(samples_array, samples, JNI_ABORT);
 
-    if (result != 0) {
-        LOGW("whisper_full failed with code %d", result);
-        return nullptr;
+    if (!ok || segments.empty()) {
+        return env->NewStringUTF("");
     }
 
-    const int segment_count = whisper_full_n_segments(context);
-    std::string lrc = "[by:ArchiveTune]\n[re:whisper.cpp]\n";
-    std::string previous_line;
-    int emitted = 0;
-
-    for (int i = 0; i < segment_count; ++i) {
-        const char * raw_text = whisper_full_get_segment_text(context, i);
-        if (raw_text == nullptr) continue;
-
-        const std::string text = trim(sanitize_utf8(raw_text));
-        if (text.empty() || is_non_speech(text)) continue;
-        if (!previous_line.empty() && text == previous_line) continue;
-
-        previous_line = text;
-        lrc += format_lrc_timestamp(whisper_full_get_segment_t0(context, i));
-        lrc += text;
+    std::string lrc = "[by:LocalTune]\n[re:whisper.cpp]\n";
+    for (const Segment & segment : segments) {
+        lrc += format_lrc_timestamp(segment.start_ms);
+        lrc += segment.text;
         lrc += '\n';
-        ++emitted;
-    }
-
-    if (emitted == 0) {
-        lrc.clear();
     }
 
     return env->NewStringUTF(lrc.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_moe_rukamori_archivetune_lyrics_WhisperEngine_nativeTranscribeSegments(
+        JNIEnv * env,
+        jobject /* thiz */,
+        jlong context_ptr,
+        jfloatArray samples_array,
+        jint thread_count,
+        jstring language_value) {
+    if (context_ptr == 0 || samples_array == nullptr) return nullptr;
+
+    auto * context = reinterpret_cast<whisper_context *>(context_ptr);
+    const jsize sample_count = env->GetArrayLength(samples_array);
+    if (sample_count <= 0) return env->NewStringUTF("");
+
+    jfloat * samples = env->GetFloatArrayElements(samples_array, nullptr);
+    if (samples == nullptr) return nullptr;
+
+    std::string language = "auto";
+    if (language_value != nullptr) {
+        const char * language_chars = env->GetStringUTFChars(language_value, nullptr);
+        if (language_chars != nullptr) {
+            language = language_chars;
+            env->ReleaseStringUTFChars(language_value, language_chars);
+        }
+    }
+    if (language.empty()) language = "auto";
+
+    std::vector<Segment> segments;
+    const bool ok = run_transcription(
+        context, samples, sample_count, static_cast<int>(thread_count), language, segments);
+    env->ReleaseFloatArrayElements(samples_array, samples, JNI_ABORT);
+
+    if (!ok || segments.empty()) {
+        return env->NewStringUTF("");
+    }
+
+    std::string dump;
+    for (const Segment & segment : segments) {
+        dump += std::to_string(segment.start_ms);
+        dump += '\t';
+        dump += std::to_string(segment.end_ms);
+        dump += '\t';
+        dump += segment.text;
+        dump += '\n';
+    }
+
+    return env->NewStringUTF(dump.c_str());
 }

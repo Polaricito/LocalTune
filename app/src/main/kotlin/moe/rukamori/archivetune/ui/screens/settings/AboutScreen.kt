@@ -694,6 +694,16 @@ private fun AboutSuccessContent(
             }
         }
 
+        item(key = "fork_notice", contentType = "about_fork") {
+            AboutContentContainer {
+                AboutForkNoticeCard(
+                    forkUrl = model.forkUrl,
+                    onOpenUri = onOpenUri,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
         item(key = "lead_developer", contentType = "about_team_section") {
             AboutContentContainer {
                 TeamMemberSection(
@@ -952,6 +962,60 @@ private fun AboutProjectInformationSection(
             itemCount = 2,
             onClick = onOpenDependencyLicenses,
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AboutForkNoticeCard(
+    forkUrl: String,
+    onOpenUri: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(AboutSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AboutSpacing.sm),
+        ) {
+            Text(
+                text = stringResource(R.string.about_fork_title),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.about_fork_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            AssistChip(
+                onClick = { onOpenUri(forkUrl) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.github),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+                label = {
+                    Text(
+                        text = stringResource(R.string.about_fork_link),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
+        }
     }
 }
 

@@ -169,13 +169,20 @@ fun LyricsScreen(
             }
         }
 
+    LaunchedEffect(mediaMetadata.id) {
+        // Always consult the local repository: the database row may be absent
+        // while a valid `.lrc` sidecar sits next to the audio file.
+        lyricsViewModel.load(mediaMetadata)
+    }
+
     LaunchedEffect(mediaMetadata.id, currentLyrics?.lyrics) {
-        if (currentLyrics?.lyrics != null && storedLyrics == null) {
-            lyricsViewModel.load(mediaMetadata)
+        // Pick up lyrics saved from the menu (online download or Whisper sync).
+        if (currentLyrics?.lyrics != null) {
+            lyricsViewModel.refresh(mediaMetadata)
         }
     }
 
-    val lyricsText = storedLyrics ?: currentLyrics?.lyrics
+    val lyricsText = storedLyrics ?: currentLyrics?.lyrics?.takeIf { LyricsUtils.hasRenderableText(it) }
     val entries =
         remember(lyricsText) {
             LyricsUtils.parseLyrics(lyricsText)
@@ -198,7 +205,7 @@ fun LyricsScreen(
     val showLyricsMenu = {
         menuState.show {
             LyricsMenu(
-                lyricsProvider = { currentLyrics },
+                lyricsTextProvider = { lyricsText },
                 mediaMetadataProvider = { mediaMetadata },
                 lyricsSyncOffset = lyricsSyncOffset,
                 onLyricsSyncOffsetChange = onLyricsSyncOffsetChange,

@@ -277,7 +277,7 @@
     <string name="crossfade_gapless_description">Затухание и появление без перекрываний звука.</string>
     <string name="about_position_yuki">пустышка reze | Админ</string>
     <string name="about_position_mo_agamy">Базовая структура | Metrolist</string>
-    <string name="about_position_zion_huang">Создатель InnerTune · Основатель проектов Metrolist, ArchiveTune и других форков</string>
+    <string name="about_position_zion_huang">Создатель InnerTune · Основатель проектов Metrolist, LocalTune и других форков</string>
     <string name="about_content_desc_github">GitHub</string>
     <string name="about_content_desc_website">Веб-сайт</string>
     <string name="about_content_desc_discord">Discord</string>
@@ -321,7 +321,7 @@
     <string name="aod_customize_entry_desc">Настройка always-on экрана проигрывателя</string>
     <string name="music_recognition_settings">Настройки распознавания музыки</string>
     <string name="music_recognition_background_title">Распознавание в фоне</string>
-    <string name="music_recognition_background_description">Когда включено, плитка Быстрых Настроек распознает аудио играющие на этом устройстве без открытия ArchiveTune.</string>
+    <string name="music_recognition_background_description">Когда включено, плитка Быстрых Настроек распознает аудио играющие на этом устройстве без открытия LocalTune.</string>
     <string name="music_recognition_background_foss_description">Распознавание в фоне недоступно в FOSS версии. Плитка Быстрых Настроек откроет меню распознавания.</string>
     <string name="music_recognition_notification_channel_name">Распознавание музыки</string>
     <string name="music_recognition_notification_channel_description">Прогресс распознавания музыки и результаты</string>
@@ -401,7 +401,7 @@
     <string name="aod_background_soft_radial">Смягчененый круглый</string>
     <string name="force_sync_on_switch_account_desc">Ре-синхронизировать плейлисты, любимые песни, исполнителей, и альбомы выбранного аккаунта после смены</string>
     <string name="aod_customize_mode_enabled">Включить режим AOD</string>
-    <string name="aod_customize_mode_enabled_desc">Разрешить ArchiveTune показывать всегда включенный экран плеера</string>
+    <string name="aod_customize_mode_enabled_desc">Разрешить LocalTune показывать всегда включенный экран плеера</string>
     <string name="aod_customize_ambient_intensity">Интенсивность окружения</string>
     <string name="aod_background_tonal_edge">Тональный край</string>
     <string name="aod_background_ambient_glow">Окружающее свечение</string>
@@ -458,7 +458,7 @@
     <string name="aod_customize_auto_start_screen_off">Показывать AOD при выключении экрана</string>
     <string name="aod_customize_auto_start_screen_off_desc">Автоматически показывать экран AOD при выключении экрана во время воспроизведения</string>
     <string name="aod_customize_screensaver_info_title">Системная заставка (AOD при зарядке)</string>
-    <string name="aod_customize_screensaver_info_desc">Чтобы автоматически активировать AOD при зарядке или в доке, перейдите в Настройки Android &gt; Дисплей &gt; Заставка и выберите ArchiveTune.</string>
+    <string name="aod_customize_screensaver_info_desc">Чтобы автоматически активировать AOD при зарядке или в доке, перейдите в Настройки Android &gt; Дисплей &gt; Заставка и выберите LocalTune.</string>
     <string name="playlist_sync_progress_step">%1$d/%2$d песен</string>
     <string name="playlist_sync_failed">Синхронизация плейлиста не удалась: %1$s</string>
     <string name="lyrics_share_resolution_value">%1$d x %2$d</string>
@@ -500,14 +500,14 @@
     <string name="storage_folder_selected_restart">Папка хранилища сохранена. Приложение перезапустится через 3 секунды.</string>
     <string name="storage_folder_invalid">Выберите допустимую папку.</string>
     <string name="storage_folder_unsupported">Эта папка не может использоваться для файлового медиа-кеша.</string>
-    <string name="storage_folder_not_writable">ArchiveTune не может записывать файлы кеша в эту папку.</string>
+    <string name="storage_folder_not_writable">LocalTune не может записывать файлы кеша в эту папку.</string>
     <string name="storage_cache_cleared">Кеш очищен.</string>
     <string name="storage_cache_clear_failed">Не удалось очистить кеш. Проверьте доступ к SD-карте.</string>
     <string name="storage_clear_song_cache_progress">Очистка кеша песен...%1$d%%</string>
     <string name="storage_clear_downloads_progress">Очистка загрузок...%1$d%%</string>
     <string name="storage_clear_image_cache_progress">Очистка кеша изображений...%1$d%%</string>
     <string name="storage_clear_canvas_cache_progress">Очистка кеша обложек...%1$d%%</string>
-    <string name="storage_cache_clear_warning">Оставьте ArchiveTune открытым во время удаления файлов кеша.</string>
+    <string name="storage_cache_clear_warning">Оставьте LocalTune открытым во время удаления файлов кеша.</string>
     <string name="storage_size_ratio">%1$s / %2$s</string>
     <string name="history_duration_desc">Минимальное время воспроизведения для засчета прослушивания песни</string>
     <string name="history_duration_seconds">%1$s с</string>

@@ -55,11 +55,41 @@ class LocalLyricsRepository
             fallbackToSidecar: Boolean = true,
         ): String? =
             withContext(Dispatchers.IO) {
-                val stored = database.getLyricsById(songId)?.lyrics?.takeIf(String::isNotBlank)
-                if (stored != null && stored != LyricsEntity.LYRICS_NOT_FOUND) return@withContext stored
-                if (!fallbackToSidecar) return@withContext null
-                readSidecar(songId)
+                val storedEntity = database.getLyricsById(songId)
+                val stored = storedEntity?.lyrics?.takeIf(String::isNotBlank)
+                val sidecar = if (fallbackToSidecar) readSidecar(songId)?.takeIf(String::isNotBlank) else null
+                pickBestLyrics(storedEntity, stored, sidecar)
             }
+
+        /**
+         * Local files win over online/remote rows. A usable sidecar is also
+         * preferred when the database only has an unusable or unsynced copy.
+         */
+        private fun pickBestLyrics(
+            storedEntity: LyricsEntity?,
+            stored: String?,
+            sidecar: String?,
+        ): String? {
+            val storedUsable = stored != null && LyricsUtils.hasRenderableText(stored)
+            val sidecarUsable = sidecar != null && LyricsUtils.hasRenderableText(sidecar)
+
+            if (sidecarUsable) {
+                val storedIsRemote = storedEntity?.source == LyricsEntity.Source.REMOTE.value
+                val storedHasWordTags = stored != null && LyricsUtils.hasWordTimestampMarkup(stored)
+                val sidecarHasWordTags = sidecar != null && LyricsUtils.hasWordTimestampMarkup(sidecar)
+                val sidecarIsBetter =
+                    !storedUsable ||
+                        storedIsRemote ||
+                        (storedHasWordTags && !sidecarHasWordTags) ||
+                        (LyricsUtils.isLineSyncedLrc(sidecar) && !LyricsUtils.isLineSyncedLrc(stored))
+                if (sidecarIsBetter) return sidecar
+            }
+
+            if (storedUsable) return stored
+            // Never surface unusable rows (LYRICS_NOT_FOUND or timestamp-only
+            // content); treat them as absent so the caller can fetch online.
+            return null
+        }
 
         suspend fun saveLyrics(
             songId: String,

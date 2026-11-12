@@ -17,6 +17,8 @@ import java.util.Locale
 object LyricsUtils {
     private val LINE_REGEX = Regex("""((\[\d{1,3}:\d{2}(?:[.:]\d{2,3})?\]\s*)+)(.*)""")
     private val TIME_REGEX = Regex("""\[(\d{1,3}):(\d{2})(?:[.:](\d{2,3}))?\]""")
+    private val WORD_TIMESTAMP_REGEX = Regex("""<\d{1,3}:\d{2}(?:[.:]\d{2,3})?>""")
+    private val LEADING_VOICE_REGEX = Regex("""^[vV]\d+:\s*""")
     private val WHITESPACE_REGEX = Regex("\\s+")
 
     fun normalizeLyricsText(raw: String?): String =
@@ -30,6 +32,25 @@ object LyricsUtils {
         val text = raw ?: return false
         return text.lineSequence().any { LINE_REGEX.matches(it.trim()) }
     }
+
+    /**
+     * True when [raw] contains at least one line with actual lyric text. This
+     * filters out stale database rows such as [LyricsEntity.LYRICS_NOT_FOUND]
+     * and malformed files that only contain timestamps.
+     */
+    fun hasRenderableText(raw: String?): Boolean {
+        val text = normalizeLyricsText(raw)
+        if (text.isEmpty() || text == "LYRICS_NOT_FOUND") return false
+        return parseLyrics(text).any { it.text.isNotBlank() }
+    }
+
+    /**
+     * True when [raw] uses enhanced-LRC word timestamps (`<mm:ss.xx>`). Some
+     * older imports stored these raw tags in the lyric text; they must never
+     * outrank a clean `.lrc` sidecar.
+     */
+    fun hasWordTimestampMarkup(raw: String?): Boolean =
+        raw != null && WORD_TIMESTAMP_REGEX.containsMatchIn(raw)
 
     fun isWordSyncedLrc(@Suppress("UNUSED_PARAMETER") raw: String?): Boolean = false
 
@@ -54,12 +75,26 @@ object LyricsUtils {
             val match = LINE_REGEX.matchEntire(line)
             if (match == null) {
                 if (line.startsWith("[")) return@forEach
-                entries += LyricsEntry(time = offset, text = line)
+                val hasWordTags = WORD_TIMESTAMP_REGEX.containsMatchIn(line)
+                val cleaned =
+                    line
+                        .replace(WORD_TIMESTAMP_REGEX, "")
+                        .let { if (hasWordTags) it.replace(LEADING_VOICE_REGEX, "") else it }
+                        .trim()
+                if (cleaned.isNotEmpty()) entries += LyricsEntry(time = offset, text = cleaned)
                 return@forEach
             }
 
             val timestamps = match.groupValues[1]
-            val content = match.groupValues[2].trim()
+            // Group 1 is the whole timestamp sequence, group 2 the last single
+            // timestamp tag and group 3 the actual lyric text.
+            val rawContent = match.groupValues[3]
+            val hasWordTags = WORD_TIMESTAMP_REGEX.containsMatchIn(rawContent)
+            val content =
+                rawContent
+                    .replace(WORD_TIMESTAMP_REGEX, "")
+                    .let { if (hasWordTags) it.replace(LEADING_VOICE_REGEX, "") else it }
+                    .trim()
             val times =
                 TIME_REGEX.findAll(timestamps).mapNotNull { timeMatch ->
                     val minutes = timeMatch.groupValues[1].toLongOrNull() ?: return@mapNotNull null
